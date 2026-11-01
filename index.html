@@ -480,17 +480,17 @@ window.FIREBASE_CONFIG = {
   window.FB_USE=async n=>n==='db'?fs:n==='assets'?assets:n==='downloads'?downloads:null;
 
   function loginView(msg){
-    V().innerHTML='<form class="panel fb-box" id="fb-login"><h2>'+t('تسجيل الدخول','Sign in')+'</h2>'
-      +'<label>'+t('الإيميل','Email')+'<input type="email" id="fb-em" autocomplete="username" required></label>'
-      +'<label>'+t('كلمة السر','Password')+'<input type="password" id="fb-pw" autocomplete="current-password" required></label>'
-      +'<div class="fb-err" id="fb-err">'+esc(msg||'')+'</div><button class="btn pri" type="submit">'+t('دخول','Sign in')+'</button>'
-      +'<button class="link" type="button" id="fb-reset">'+t('نسيت كلمة السر؟','Forgot password?')+'</button></form>';
-    const f=document.getElementById('fb-login');
-    f.onsubmit=async ev=>{ev.preventDefault();const b=f.querySelector('.btn');b.disabled=true;document.getElementById('fb-err').textContent='';
-      try{await auth.signInWithEmailAndPassword(document.getElementById('fb-em').value.trim(),document.getElementById('fb-pw').value)}
-      catch(e){b.disabled=false;document.getElementById('fb-err').textContent=t('الإيميل أو كلمة السر غلط','Wrong email or password')}};
-    document.getElementById('fb-reset').onclick=async()=>{const em=document.getElementById('fb-em').value.trim();if(!em){document.getElementById('fb-err').textContent=t('اكتب الإيميل الأول','Enter your email first');return}
-      try{await auth.sendPasswordResetEmail(em);document.getElementById('fb-err').textContent=t('اتبعتلك رسالة لتغيير كلمة السر','Reset email sent')}catch(e){document.getElementById('fb-err').textContent=e.message}};
+    V().innerHTML='<div class="panel fb-box"><h2>'+t('تسجيل الدخول','Sign in')+'</h2>'
+      +'<div class="muted">'+t('ادخل بحساب Google المسموح له.','Sign in with the authorised Google account.')+'</div>'
+      +'<div class="fb-err" id="fb-err">'+esc(msg||'')+'</div>'
+      +'<button class="btn pri" type="button" id="fb-g" style="justify-content:center;padding:10px 14px">'
+      +'<svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>'
+      +t('الدخول بحساب Google','Sign in with Google')+'</button></div>';
+    document.getElementById('fb-g').onclick=async()=>{const er=document.getElementById('fb-err');er.textContent='';
+      const p=new firebase.auth.GoogleAuthProvider();p.setCustomParameters({prompt:'select_account'});
+      try{await auth.signInWithPopup(p)}catch(e){
+        if(e&&(e.code==='auth/popup-blocked'||e.code==='auth/operation-not-supported-in-this-environment')){try{await auth.signInWithRedirect(p)}catch(e2){er.textContent=e2.message}}
+        else if(e&&e.code!=='auth/popup-closed-by-user'&&e.code!=='auth/cancelled-popup-request')er.textContent=t('تعذر تسجيل الدخول: ','Sign-in failed: ')+(e.message||e)}};
   }
   function addLogout(){const foot=document.querySelector('.side-foot');if(!foot||document.getElementById('fb-out'))return;
     const b=document.createElement('button');b.id='fb-out';b.className='fb-out';b.textContent=t('خروج','Sign out')+' · '+(auth.currentUser?.email||'');

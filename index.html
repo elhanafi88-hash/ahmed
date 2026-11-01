@@ -410,7 +410,6 @@ body.kiosk-on .side{display:none!important}body.kiosk-on #app{display:block}body
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-storage-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
 .fb-box{max-width:420px;margin:40px auto;display:flex;flex-direction:column;gap:12px;padding:22px}
@@ -422,7 +421,14 @@ body.kiosk-on .side{display:none!important}body.kiosk-on #app{display:block}body
 </style>
 <script>
 /* ===== Firebase backend (replaces the claude.ai runtime) ===== */
-window.FIREBASE_CONFIG = /*FIREBASE_CONFIG*/null/*END*/;
+window.FIREBASE_CONFIG = {
+  apiKey: "AIzaSyAaywpaoyWe_0ivk37BT3f7nSj-2Hg9f24",
+  authDomain: "metaplex-workers.firebaseapp.com",
+  projectId: "metaplex-workers",
+  storageBucket: "metaplex-workers.firebasestorage.app",
+  messagingSenderId: "331576904815",
+  appId: "1:331576904815:web:f1ba2e28149eb1f947119a"
+};
 (function(){
   let readyResolve;window.FB_READY=new Promise(r=>readyResolve=r);
   const AR=()=>document.getElementById('app')?.getAttribute('dir')!=='ltr';
@@ -434,19 +440,39 @@ window.FIREBASE_CONFIG = /*FIREBASE_CONFIG*/null/*END*/;
     return;
   }
   firebase.initializeApp(window.FIREBASE_CONFIG);
-  const auth=firebase.auth(),fs=firebase.firestore(),st=firebase.storage();
+  const auth=firebase.auth(),fs=firebase.firestore();
   try{fs.settings({ignoreUndefinedProperties:true,merge:true})}catch(e){}
   try{fs.enablePersistence({synchronizeTabs:true}).catch(()=>{})}catch(e){}
   const hex=()=>Array.from(crypto.getRandomValues(new Uint8Array(16)),b=>b.toString(16).padStart(2,'0')).join('');
-  const PURL={};let blobsSub=null;
+  /* Files live in Firestore: blobs/{id} = {ct,size,n,d?}. Small files (<=INLINE) keep bytes in d; larger ones are split into blobs/{id}/c/{i}. */
+  const INLINE=450000,CHUNK=900000,FBBlob=firebase.firestore.Blob;
+  const PURL={},META={},LOADING={};
   function applyPurl(){try{if(typeof S!=='undefined'&&S){S.purl=S.purl||{};Object.assign(S.purl,PURL);if(S.ready&&typeof refresh==='function')refresh()}}catch(e){}}
+  async function writeBlob(id,blob,ct){
+    const u8=new Uint8Array(await blob.arrayBuffer());
+    if(u8.length<=INLINE){await fs.collection('blobs').doc(id).set({ct,size:u8.length,n:0,d:FBBlob.fromUint8Array(u8),at:Date.now()});return}
+    const n=Math.ceil(u8.length/CHUNK);
+    for(let i=0;i<n;i++)await fs.collection('blobs').doc(id).collection('c').doc(String(i)).set({d:FBBlob.fromUint8Array(u8.subarray(i*CHUNK,(i+1)*CHUNK))});
+    await fs.collection('blobs').doc(id).set({ct,size:u8.length,n,at:Date.now()});
+  }
+  async function readBlob(id){
+    if(PURL[id]){return (await window.__origFetch(PURL[id])).blob()}
+    let m=META[id];if(!m){const d=await fs.collection('blobs').doc(id).get();if(!d.exists)throw new Error('file not found');m=d.data()}
+    let parts=[];if(m.d)parts=[m.d.toUint8Array()];else{for(let i=0;i<m.n;i++){const c=await fs.collection('blobs').doc(id).collection('c').doc(String(i)).get();parts.push(c.data().d.toUint8Array())}}
+    const b=new Blob(parts,{type:m.ct||'application/octet-stream'});PURL[id]=URL.createObjectURL(b);return b}
+  window.__origFetch=window.fetch.bind(window);
+  const blobIdOf=u=>{const m=String(u||'').match(/\/_blob\/([0-9a-f]{16,})/i);return m&&m[1]};
+  window.fetch=async(input,init)=>{const id=blobIdOf(typeof input==='string'?input:input&&input.url);if(id)return new Response(await readBlob(id));return window.__origFetch(input,init)};
+  document.addEventListener('click',ev=>{const a=ev.target.closest&&ev.target.closest('a[href*="/_blob/"]');if(!a)return;const id=blobIdOf(a.getAttribute('href'));if(!id)return;
+    ev.preventDefault();ev.stopPropagation();const w=window.open('about:blank','_blank');if(w)w.document.write('<p style="font-family:sans-serif;padding:20px">Loading… جاري فتح الملف</p>');
+    readBlob(id).then(()=>{if(w)w.location.href=PURL[id];else location.href=PURL[id];applyPurl()}).catch(e=>{if(w)w.close();alert(e.message)})},true);
 
   const assets={
     async upload(blob,opt){const id=hex();const ct=(opt&&opt.type)||blob.type||'application/octet-stream';
-      const ref=st.ref('blobs/'+id);await ref.put(blob,{contentType:ct});const url=await ref.getDownloadURL();
-      await fs.collection('blobs').doc(id).set({url,ct,size:blob.size,at:Date.now()});PURL[id]=url;
+      await writeBlob(id,blob,ct);const url=URL.createObjectURL(blob);PURL[id]=url;
       return {id,url,sizeBytes:blob.size}},
-    async delete(id){try{await st.ref('blobs/'+id).delete()}catch(e){}await fs.collection('blobs').doc(id).delete();delete PURL[id]}
+    async delete(id){const m=META[id];if(m&&m.n){for(let i=0;i<m.n;i++)await fs.collection('blobs').doc(id).collection('c').doc(String(i)).delete()}
+      await fs.collection('blobs').doc(id).delete();delete PURL[id]}
   };
   const downloads={async save({filename,data}){
     let b=data instanceof Blob?data:new Blob([data],{type:typeof data==='string'?'text/html;charset=utf-8':'application/octet-stream'});
@@ -483,7 +509,8 @@ window.FIREBASE_CONFIG = /*FIREBASE_CONFIG*/null/*END*/;
           const ids=Object.keys(bk.blobs||{});const docs=[];for(const [c,m] of Object.entries(bk.collections))for(const [id,d] of Object.entries(m))docs.push([c,id,d]);
           const total=ids.length+docs.length;let n=0;const tick=s=>{n++;bar.style.width=(100*n/total).toFixed(1)+'%';sx.textContent=s+' ('+n+'/'+total+')'};
           let q=ids.slice();const worker=async()=>{while(q.length){const id=q.shift();const ex=await fs.collection('blobs').doc(id).get();if(!ex.exists){
-            const zf=zip.file('blobs/'+id);if(zf){const b=await zf.async('blob');const ct=bk.blobs[id];const ref=st.ref('blobs/'+id);await ref.put(b,{contentType:ct});const url=await ref.getDownloadURL();await fs.collection('blobs').doc(id).set({url,ct,size:b.size,at:Date.now()})}}
+            
+            const zf=zip.file('blobs/'+id);if(zf){const b=await zf.async('blob');await writeBlob(id,b,bk.blobs[id])}}
             tick(t('رفع الملفات','Uploading files'))}};
           await Promise.all([worker(),worker(),worker(),worker()]);
           for(let i=0;i<docs.length;i+=400){const b=fs.batch();for(const [c,id,d] of docs.slice(i,i+400))b.set(fs.collection(c).doc(id),d);await b.commit();for(let k=0;k<Math.min(400,docs.length-i);k++)tick(t('حفظ البيانات','Saving records'))}
@@ -500,8 +527,11 @@ window.FIREBASE_CONFIG = /*FIREBASE_CONFIG*/null/*END*/;
     V().innerHTML='<div class="panel empty"><b>'+t('جاري تحميل بيانات العمال…','Loading workers…')+'</b></div>';
     try{const s=await fs.collection('employees').limit(1).get();if(s.empty)await importView()}
     catch(e){V().innerHTML='<div class="panel empty"><b>'+t('الحساب ده مالوش صلاحية','This account has no access')+'</b><div class="mono" style="font-size:12px">'+esc(e.message)+'</div></div>';addLogout();return}
-    blobsSub=fs.collection('blobs').onSnapshot(s=>{for(const d of s.docs)PURL[d.id]=d.data().url;applyPurl()},()=>{});
-    await new Promise(r=>{const c=fs.collection('blobs').onSnapshot(()=>{c();r()},()=>{c();r()})});
+    await new Promise(r=>{let first=true;fs.collection('blobs').onSnapshot(s=>{for(const ch of s.docChanges()){const id=ch.doc.id;
+        if(ch.type==='removed'){delete META[id];if(PURL[id]){URL.revokeObjectURL(PURL[id]);delete PURL[id]}continue}
+        const m=ch.doc.data();META[id]={ct:m.ct,size:m.size,n:m.n||0,d:m.d||null};
+        if(m.d&&!PURL[id])PURL[id]=URL.createObjectURL(new Blob([m.d.toUint8Array()],{type:m.ct}))}
+      applyPurl();if(first){first=false;r()}},()=>{if(first){first=false;r()}})});
     addLogout();readyResolve();
     const iv=setInterval(()=>{try{if(typeof S!=='undefined'&&S){applyPurl();if(S.ready)clearInterval(iv)}}catch(e){}},300);
   });

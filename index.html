@@ -407,6 +407,106 @@ body.kiosk-on .side{display:none!important}body.kiosk-on #app{display:block}body
   <div id="toast-root"></div>
 </div>
 
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-storage-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+.fb-box{max-width:420px;margin:40px auto;display:flex;flex-direction:column;gap:12px;padding:22px}
+.fb-box h2{margin-bottom:4px}.fb-box label{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--muted)}
+.fb-box input{width:100%;direction:ltr}.fb-err{color:var(--bad);font-size:13px;min-height:1em}
+.fb-prog{height:8px;background:var(--sunk);border-radius:4px;overflow:hidden}.fb-prog i{display:block;height:100%;width:0;background:var(--accent);transition:width .2s}
+.fb-out{background:transparent;border:1px solid var(--nav-line);color:var(--nav-ink);border-radius:7px;padding:6px 10px;cursor:pointer;font-size:12px}
+.fb-out:hover{color:var(--nav-hi)}
+</style>
+<script>
+/* ===== Firebase backend (replaces the claude.ai runtime) ===== */
+window.FIREBASE_CONFIG = /*FIREBASE_CONFIG*/null/*END*/;
+(function(){
+  let readyResolve;window.FB_READY=new Promise(r=>readyResolve=r);
+  const AR=()=>document.getElementById('app')?.getAttribute('dir')!=='ltr';
+  const t=(a,e)=>AR()?a:e;
+  const V=()=>document.getElementById('view');
+  const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  if(!window.FIREBASE_CONFIG||!window.firebase){
+    document.addEventListener('DOMContentLoaded',()=>{V().innerHTML='<div class="panel empty"><b>'+t('لسه ما اتربطش Firebase','Firebase is not configured yet')+'</b>'+t('حط إعدادات firebaseConfig في أول الملف.','Add firebaseConfig at the top of the file.')+'</div>'});
+    return;
+  }
+  firebase.initializeApp(window.FIREBASE_CONFIG);
+  const auth=firebase.auth(),fs=firebase.firestore(),st=firebase.storage();
+  try{fs.settings({ignoreUndefinedProperties:true,merge:true})}catch(e){}
+  try{fs.enablePersistence({synchronizeTabs:true}).catch(()=>{})}catch(e){}
+  const hex=()=>Array.from(crypto.getRandomValues(new Uint8Array(16)),b=>b.toString(16).padStart(2,'0')).join('');
+  const PURL={};let blobsSub=null;
+  function applyPurl(){try{if(typeof S!=='undefined'&&S){S.purl=S.purl||{};Object.assign(S.purl,PURL);if(S.ready&&typeof refresh==='function')refresh()}}catch(e){}}
+
+  const assets={
+    async upload(blob,opt){const id=hex();const ct=(opt&&opt.type)||blob.type||'application/octet-stream';
+      const ref=st.ref('blobs/'+id);await ref.put(blob,{contentType:ct});const url=await ref.getDownloadURL();
+      await fs.collection('blobs').doc(id).set({url,ct,size:blob.size,at:Date.now()});PURL[id]=url;
+      return {id,url,sizeBytes:blob.size}},
+    async delete(id){try{await st.ref('blobs/'+id).delete()}catch(e){}await fs.collection('blobs').doc(id).delete();delete PURL[id]}
+  };
+  const downloads={async save({filename,data}){
+    let b=data instanceof Blob?data:new Blob([data],{type:typeof data==='string'?'text/html;charset=utf-8':'application/octet-stream'});
+    const u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download=filename||'download';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);return true}};
+  window.FB_USE=async n=>n==='db'?fs:n==='assets'?assets:n==='downloads'?downloads:null;
+
+  function loginView(msg){
+    V().innerHTML='<form class="panel fb-box" id="fb-login"><h2>'+t('تسجيل الدخول','Sign in')+'</h2>'
+      +'<label>'+t('الإيميل','Email')+'<input type="email" id="fb-em" autocomplete="username" required></label>'
+      +'<label>'+t('كلمة السر','Password')+'<input type="password" id="fb-pw" autocomplete="current-password" required></label>'
+      +'<div class="fb-err" id="fb-err">'+esc(msg||'')+'</div><button class="btn pri" type="submit">'+t('دخول','Sign in')+'</button>'
+      +'<button class="link" type="button" id="fb-reset">'+t('نسيت كلمة السر؟','Forgot password?')+'</button></form>';
+    const f=document.getElementById('fb-login');
+    f.onsubmit=async ev=>{ev.preventDefault();const b=f.querySelector('.btn');b.disabled=true;document.getElementById('fb-err').textContent='';
+      try{await auth.signInWithEmailAndPassword(document.getElementById('fb-em').value.trim(),document.getElementById('fb-pw').value)}
+      catch(e){b.disabled=false;document.getElementById('fb-err').textContent=t('الإيميل أو كلمة السر غلط','Wrong email or password')}};
+    document.getElementById('fb-reset').onclick=async()=>{const em=document.getElementById('fb-em').value.trim();if(!em){document.getElementById('fb-err').textContent=t('اكتب الإيميل الأول','Enter your email first');return}
+      try{await auth.sendPasswordResetEmail(em);document.getElementById('fb-err').textContent=t('اتبعتلك رسالة لتغيير كلمة السر','Reset email sent')}catch(e){document.getElementById('fb-err').textContent=e.message}};
+  }
+  function addLogout(){const foot=document.querySelector('.side-foot');if(!foot||document.getElementById('fb-out'))return;
+    const b=document.createElement('button');b.id='fb-out';b.className='fb-out';b.textContent=t('خروج','Sign out')+' · '+(auth.currentUser?.email||'');
+    b.onclick=()=>auth.signOut().then(()=>location.reload());foot.appendChild(b)}
+
+  async function importView(){
+    return new Promise(done=>{
+      V().innerHTML='<div class="panel fb-box"><h2>'+t('نقل البيانات','Import data')+'</h2><div class="muted">'+t('قاعدة البيانات فاضية. اختار ملف النسخة الاحتياطية metaplex-backup.zip عشان ننقل العمال والحضور والمرتبات والصور.','The database is empty. Pick metaplex-backup.zip to import workers, attendance, payroll and files.')+'</div>'
+        +'<input type="file" id="fb-zip" accept=".zip"><div class="fb-prog"><i id="fb-bar"></i></div><div class="muted" id="fb-st"></div><div class="fb-err" id="fb-err"></div>'
+        +'<button class="btn" id="fb-skip" type="button">'+t('تخطي وابدأ فاضي','Skip, start empty')+'</button></div>';
+      document.getElementById('fb-skip').onclick=()=>done();
+      document.getElementById('fb-zip').onchange=async ev=>{const file=ev.target.files[0];if(!file)return;
+        const bar=document.getElementById('fb-bar'),sx=document.getElementById('fb-st'),er=document.getElementById('fb-err');ev.target.disabled=true;document.getElementById('fb-skip').disabled=true;
+        try{
+          const zip=await JSZip.loadAsync(file);const bk=JSON.parse(await zip.file('backup.json').async('string'));
+          const ids=Object.keys(bk.blobs||{});const docs=[];for(const [c,m] of Object.entries(bk.collections))for(const [id,d] of Object.entries(m))docs.push([c,id,d]);
+          const total=ids.length+docs.length;let n=0;const tick=s=>{n++;bar.style.width=(100*n/total).toFixed(1)+'%';sx.textContent=s+' ('+n+'/'+total+')'};
+          let q=ids.slice();const worker=async()=>{while(q.length){const id=q.shift();const ex=await fs.collection('blobs').doc(id).get();if(!ex.exists){
+            const zf=zip.file('blobs/'+id);if(zf){const b=await zf.async('blob');const ct=bk.blobs[id];const ref=st.ref('blobs/'+id);await ref.put(b,{contentType:ct});const url=await ref.getDownloadURL();await fs.collection('blobs').doc(id).set({url,ct,size:b.size,at:Date.now()})}}
+            tick(t('رفع الملفات','Uploading files'))}};
+          await Promise.all([worker(),worker(),worker(),worker()]);
+          for(let i=0;i<docs.length;i+=400){const b=fs.batch();for(const [c,id,d] of docs.slice(i,i+400))b.set(fs.collection(c).doc(id),d);await b.commit();for(let k=0;k<Math.min(400,docs.length-i);k++)tick(t('حفظ البيانات','Saving records'))}
+          sx.textContent=t('تم النقل بنجاح ✓','Import complete ✓');setTimeout(done,700);
+        }catch(e){er.textContent=t('حصلت مشكلة: ','Error: ')+(e.message||e)+' — '+t('اختار الملف تاني وهيكمل من مكان ما وقف.','pick the file again to resume.');ev.target.disabled=false;ev.target.value=''}
+      };
+    });
+  }
+
+  let started=false;
+  auth.onAuthStateChanged(async u=>{
+    if(!u){if(started)location.reload();else loginView();return}
+    if(started)return;started=true;
+    V().innerHTML='<div class="panel empty"><b>'+t('جاري تحميل بيانات العمال…','Loading workers…')+'</b></div>';
+    try{const s=await fs.collection('employees').limit(1).get();if(s.empty)await importView()}
+    catch(e){V().innerHTML='<div class="panel empty"><b>'+t('الحساب ده مالوش صلاحية','This account has no access')+'</b><div class="mono" style="font-size:12px">'+esc(e.message)+'</div></div>';addLogout();return}
+    blobsSub=fs.collection('blobs').onSnapshot(s=>{for(const d of s.docs)PURL[d.id]=d.data().url;applyPurl()},()=>{});
+    await new Promise(r=>{const c=fs.collection('blobs').onSnapshot(()=>{c();r()},()=>{c();r()})});
+    addLogout();readyResolve();
+    const iv=setInterval(()=>{try{if(typeof S!=='undefined'&&S){applyPurl();if(S.ready)clearInterval(iv)}}catch(e){}},300);
+  });
+})();
+</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
 "use strict";
@@ -2129,9 +2229,9 @@ const bootErr=m=>{if(S.ready)return;const v=$('#view');if(v)v.innerHTML='<div cl
 window.addEventListener('error',ev=>bootErr(ev.message));window.addEventListener('unhandledrejection',ev=>bootErr(ev.reason&&(ev.reason.message||ev.reason)));
 renderChrome();
 (async()=>{
-  const use=n=>window.claude&&window.claude.use?window.claude.use(n).catch(()=>null):Promise.resolve(null);
+  await window.FB_READY;const use=n=>window.FB_USE?window.FB_USE(n).catch(()=>null):Promise.resolve(null);
   let [db,dl,as]=await Promise.all([use('db'),use('downloads'),use('assets')]);S.dl=dl;S.assets=as;
-  if(!db){S.db=false;renderChrome();$('#view').innerHTML='<div class="panel empty"><b>'+_('قاعدة البيانات غير متاحة في هذا العرض','The database is not available in this view')+'</b>'+_('افتح الصفحة من حسابك على claude.ai عشان تظهر بيانات العمال.','Open this page from your claude.ai account to see the workers.')+'</div>';return}
+  if(!db){S.db=false;renderChrome();$('#view').innerHTML='<div class="panel empty"><b>'+_('قاعدة البيانات غير متاحة في هذا العرض','The database is not available in this view')+'</b>'+_('تأكد من إعدادات Firebase.','Check the Firebase settings.')+'</div>';return}
   const fwd=(t,over)=>new Proxy({},{get:(_o,pr)=>{if(over&&pr in over)return over[pr];const v=t[pr];return typeof v==='function'?v.bind(t):v}});
   const wRef=r=>r?fwd(r,{set:(...a)=>r.set(...a).then(x=>{savedFlash();return x}),update:(...a)=>r.update(...a).then(x=>{savedFlash();return x}),delete:(...a)=>r.delete(...a).then(x=>{savedFlash();return x})}):r;
   const rawDb=db;let dbw=rawDb;try{dbw=fwd(rawDb,{collection:n=>{const c=rawDb.collection(n);return fwd(c,{doc:id=>wRef(c.doc(id))})},doc:pth=>wRef(rawDb.doc(pth))})}catch(err){dbw=rawDb}

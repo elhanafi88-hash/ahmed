@@ -1603,8 +1603,11 @@ async function showWarn(w,e){await preloadPhotos([e]);showReport(repWarn(w,e),'W
 function repWarn(w,e){const g=SIGNER(),d=e.photo&&S.pdata[e.photo],lv=wLevel(w.level),a=num(w.amount),hi=wHi(w.type),fin=w.level==='F';
   const prev=(e.warns||[]).filter(x=>x.id!==w.id&&((x.d||'')<(w.d||'')||((x.d||'')===(w.d||'')&&(x.at||0)<(w.at||0)))).sort((x,y)=>(x.d||'').localeCompare(y.d||''));
   const lvEn=lv[1][1],lvHi=lv[2];
-  const dedEn=a?' As a disciplinary action, a deduction will be made from your salary for the month of <b>'+esc(enMonth(w.month))+'</b>.':'';
-  const dedHi=a?' अनुशासनात्मक कार्रवाई के रूप में, <b>'+esc(hiMonth(w.month))+'</b> महीने के आपके वेतन से कटौती की जाएगी।':'';
+  const dy=num(w.days),hasD=a>0||dy>0;
+  const qEn=dy?'<b>'+dy+' day'+(dy===1?'':'s')+'</b> of salary':'an amount of <b>AED '+money(a)+'</b> ('+esc(words(a))+')';
+  const qHi=dy?'<b>'+dy+' दिन</b> का वेतन':'<b>AED '+money(a)+'</b> की राशि';
+  const dedEn=hasD?' As a disciplinary action, '+qEn+' will be deducted from your salary for the month of <b>'+esc(enMonth(w.month))+'</b>.':'';
+  const dedHi=hasD?' अनुशासनात्मक कार्रवाई के रूप में, <b>'+esc(hiMonth(w.month))+'</b> महीने के आपके वेतन से '+qHi+' काटा जाएगा।':'';
   return '<div class="rp wl" dir="ltr">'+
    '<div class="wl-top"><img src="'+LOGO+'" alt="METAPLEX"><div class="wl-ref">Ref. / संदर्भ <b>'+esc(w.no||'')+'</b>Date / दिनांक <b>'+dmy(w.d||TODAY)+'</b></div></div>'+
    '<div class="wl-ttl"><b>WARNING LETTER</b><span class="hi">चेतावनी पत्र</span><div><span class="wl-lv">'+esc(lvEn)+' · <span class="hi">'+lvHi+'</span></span></div></div>'+
@@ -1616,6 +1619,8 @@ function repWarn(w,e){const g=SIGNER(),d=e.photo&&S.pdata[e.photo],lv=wLevel(w.l
     (prev.length?'<tr><td>Previous warnings / <span class="hi">पिछली चेतावनियाँ</span></td><td>'+prev.map(x=>esc(wLevel(x.level)[1][1])+' ('+dmy(x.d)+')').join(', ')+'</td></tr>':'')+
    '</table></div>'+
    '<div class="wl-sec"><h4>Violation · <span class="hi">उल्लंघन</span> — Reason for deduction · <span class="hi">कटौती का कारण</span></h4><div class="wl-viol"><b>'+esc(w.type||'')+'</b>'+(hi?' <span class="hi">/ '+hi+'</span>':'')+(w.note?'<div>'+esc(w.note)+'</div>':'')+'<div style="color:#5a6878;font-size:10.5px">Date of violation / <span class="hi">उल्लंघन की तारीख</span>: '+dmy(w.d||TODAY)+'</div></div></div>'+
+   (hasD?'<div class="wl-sec"><h4>Salary deduction · <span class="hi">वेतन कटौती</span></h4><div class="wl-ded"><div class="amt"><span>'+(dy?'Days deducted / <span class="hi">कटौती के दिन</span>':'Amount / <span class="hi">राशि</span>')+'</span><b>'+(dy?dy+' day'+(dy===1?'':'s')+' / <span class="hi">दिन</span>':'AED '+money(a))+'</b></div>'+
+    '<div><span>Deducted from salary of / <span class="hi">वेतन से कटौती</span></span><b>'+esc(enMonth(w.month))+'</b></div></div></div>':'')+
    '<div class="wl-sec wl-txt"><h4>English</h4><p>Dear <b>'+esc(e.name||'')+'</b>,</p>'+
     '<p>This letter is a formal <b>'+esc(lvEn.toLowerCase())+'</b> issued to you for the violation stated above, committed on <b>'+dmy(w.d||TODAY)+'</b>. This behaviour is against the company rules and regulations and is not acceptable.'+dedEn+'</p>'+
     '<p>'+(fin?'<b>This is your final warning.</b> Any further violation will result in the termination of your employment in accordance with the UAE Labour Law, without any further notice.':'You are instructed to strictly follow the company rules and the instructions of your supervisor. Any repetition of this or any other violation will lead to stricter disciplinary action, including further deductions or termination of employment in accordance with the UAE Labour Law.')+'</p></div>'+

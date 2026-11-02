@@ -1538,7 +1538,8 @@ const WTYPES=[
  ['Misconduct / fighting at work','काम पर दुर्व्यवहार / झगड़ा','سوء سلوك / مشاجرة'],
  ['Mobile phone use during work','काम के दौरान मोबाइल फोन का उपयोग','استخدام الموبايل أثناء العمل'],
  ['Smoking in a prohibited area','प्रतिबंधित क्षेत्र में धूम्रपान','التدخين في مكان ممنوع'],
- ['Sleeping during working hours','काम के समय सोना','النوم أثناء ساعات العمل']];
+ ['Sleeping during working hours','काम के समय सोना','النوم أثناء ساعات العمل'],
+ ['Drinking alcohol, causing harm and assaulting co-workers, in serious breach of the code of conduct','शराब पीकर सहकर्मियों को नुकसान पहुँचाना और उन पर हमला करना, जो आचार संहिता का गंभीर उल्लंघन है','شرب الخمر والتعدي بالأذى على الزملاء ومخالفة ميثاق التعامل']];
 const wLevel=c=>WLEVELS.find(x=>x[0]===c)||WLEVELS[0];
 const wHi=t=>{const x=WTYPES.find(y=>y[0]===t);return x?x[1]:''};
 const enMonth=m=>{const [y,mm]=(m||TODAY.slice(0,7)).split('-').map(Number);return new Date(y,mm-1,1).toLocaleDateString('en-GB',{month:'long',year:'numeric'})};
@@ -1581,7 +1582,8 @@ function openWarn(k){const act=active().sort((a,b)=>a.name.localeCompare(b.name)
      '<div class="sub" style="margin-top:10px">'+_('الإنذارات السابقة','Previous warnings')+': '+(prev.length?prev.map(x=>esc(L(wLevel(x.level)[1]))+' '+_('في','on')+' '+fmt(x.d)).join(' · '):_('لا يوجد','none'))+'</div>'+
      (num(e.basic)?'':'<div class="note" style="margin-top:10px">'+_('العامل ده ماله راتب أساسي مسجل، فالخصم بالأيام هيطلع صفر. استخدم مبلغ ثابت.','No basic salary recorded, so a deduction by days comes to zero. Use a fixed amount.')+'</div>');
     if(prev.length&&$('#w_lv').dataset.touched!=='1'){$('#w_lv').value=prev.some(x=>x.level==='2'||x.level==='F')?'F':'2'}};
-  info();for(const id of ['w_emp','w_mode','w_type','w_lv'])$('#'+id).addEventListener('change',info);for(const id of ['w_days','w_amt'])$('#'+id).addEventListener('input',info);
+  info();for(const id of ['w_emp','w_mode','w_type','w_lv'])$('#'+id).addEventListener('change',info);
+  $('#w_type').addEventListener('change',()=>{if(/^Drinking alcohol/.test($('#w_type').value)&&$('#w_lv').dataset.touched!=='1')$('#w_lv').value='F'});for(const id of ['w_days','w_amt'])$('#'+id).addEventListener('input',info);
   $('#w_lv').addEventListener('change',()=>{$('#w_lv').dataset.touched='1'});
   $('#w_date').addEventListener('change',()=>{const v=$('#w_date').value;if(v)$('#w_month').value=v.slice(0,7)});
   $('#wform').addEventListener('submit',async ev=>{ev.preventDefault();if(!canWrite())return;const e0=byKey($('#w_emp').value);

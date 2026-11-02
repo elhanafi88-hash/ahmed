@@ -859,7 +859,7 @@ function renderData(v){
    panel(_('استيراد من إكسل','Import from Excel'),'','<div style="display:flex;flex-direction:column;gap:10px"><p class="muted" style="margin:0">'+_('ارفع ملف بنفس أعمدة "Employee Master List". العامل الموجود يتحدث برقم الموظف (أو بالاسم لو مفيش رقم)، والجديد يتضاف. الخانات الفاضية في الملف ما بتمسحش البيانات الحالية.','Upload a file with the "Employee Master List" columns. Existing workers are matched by employee ID (or name when there is no ID); new ones are added. Empty cells never erase current data.')+'</p><div><input type="file" id="impfile" accept=".xlsx,.xls,.csv" class="field"></div><div id="impres"></div></div>')+
   '</div>'+
   panel(_('القوائم والتنبيهات','Lists and alerts'),'<button class="btn pri" data-act="savelists">'+_('حفظ القوائم','Save lists')+'</button>',
-   '<div style="display:flex;flex-direction:column;gap:14px"><div class="fg style="max-width:640px"><label>'+_('اسم المعتمد في التقارير','Report approver name')+'<input type="text" id="signName" dir="ltr" value="'+esc(SIGNER().n)+'"></label><label>'+_('المسمى الوظيفي للمعتمد','Approver title')+'<input type="text" id="signTitle" dir="ltr" value="'+esc(SIGNER().t)+'"></label></div><label style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">'+_('نبّهني قبل انتهاء أي مستند بـ','Alert me before any document expires by')+' <input type="number" id="alertDays" min="1" max="365" value="'+S.lists.alertDays+'" style="width:90px"> '+_('يوم','days')+'</label>'+
+   '<div style="display:flex;flex-direction:column;gap:14px"><div class="fg style="max-width:640px"><label>'+_('اسم المعتمد في التقارير','Report approver name')+'<input type="text" id="signName" dir="ltr" value="'+esc(SIGNER().n)+'"></label><label>'+_('المسمى الوظيفي للمعتمد','Approver title')+'<input type="text" id="signTitle" dir="ltr" value="'+esc(SIGNER().t)+'"></label><label>'+_('اسم المدير العام للمصنع (لخطابات الإنذار)','Factory General Manager name (warning letters)')+'<input type="text" id="gmName" dir="ltr" value="'+esc(S.lists.gmName||'')+'"></label></div><label style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">'+_('نبّهني قبل انتهاء أي مستند بـ','Alert me before any document expires by')+' <input type="number" id="alertDays" min="1" max="365" value="'+S.lists.alertDays+'" style="width:90px"> '+_('يوم','days')+'</label>'+
    '<p class="muted" style="margin:0">'+_('كل سطر = اختيار واحد في القوائم المنسدلة. القيم بالإنجليزي عشان تفضل متوافقة مع ملف الإكسل.','One option per line. Values stay in English so they match the Excel file.')+'</p>'+
    '<div class="lists">'+LIST_LABELS.map(([k,l])=>'<label>'+L(l)+'<textarea id="ls_'+k+'" spellcheck="false">'+esc((S.lists[k]||[]).join('\n'))+'</textarea></label>').join('')+'</div></div>')}
 
@@ -1210,15 +1210,15 @@ const REP_CSS=`.rp{background:#fff;color:#1a222c;font-family:"IBM Plex Sans Arab
 .wl-ttl{margin:3mm 0 2.5mm;text-align:center}.wl-ttl b{display:block;font-family:Georgia,"Times New Roman",serif;font-size:24px;letter-spacing:.04em;color:#a3241b}.wl-ttl span{font-size:14px;color:#a3241b;font-weight:600}
 .wl-lv{display:inline-block;margin-top:1.5mm;padding:1mm 4mm;border:1.4px solid #a3241b;border-radius:1mm;color:#a3241b;font-weight:700;font-size:11px;letter-spacing:.06em;text-transform:uppercase;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .wl-who{display:flex;gap:5mm;align-items:stretch;border:1px solid #c9d2dc;border-radius:1.5mm;padding:3mm;background:#f6f8fa;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-.wl-ph{width:27mm;height:32mm;border-radius:1mm;overflow:hidden;background:#e1e7ee;display:grid;place-items:center;flex:none;border:1px solid #c9d2dc}.wl-ph img{width:100%;height:100%;object-fit:cover}.wl-ph span{font-size:26px;font-weight:700;color:#1C5A8A}
+.wl-ph{width:25mm;height:30mm;border-radius:1mm;overflow:hidden;background:#e1e7ee;display:grid;place-items:center;flex:none;border:1px solid #c9d2dc}.wl-ph img{width:100%;height:100%;object-fit:cover}.wl-ph span{font-size:26px;font-weight:700;color:#1C5A8A}
 .wl-who table{border-collapse:collapse;flex:1;align-self:center}.wl-who td{padding:.9mm 2mm;border-bottom:1px solid #e1e7ee;vertical-align:top}.wl-who tr:last-child td{border-bottom:0}.wl-who td:first-child{color:#5a6878;width:42mm;font-size:10.5px}.wl-who td:last-child{font-weight:600;font-size:12.5px}
 .wl-sec{margin-top:3.2mm}.wl-sec h4{margin:0 0 1.5mm;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#13283C;border-bottom:1px solid #c9d2dc;padding-bottom:1mm}
 .wl-viol{border-left:3px solid #a3241b;padding:2mm 3mm;background:#fdf3f2;-webkit-print-color-adjust:exact;print-color-adjust:exact}.wl-viol b{font-size:12.5px}.wl-viol div{margin-top:1mm}
 .wl-ded{display:flex;border:1.4px solid #13283C;border-radius:1.5mm;overflow:hidden}.wl-ded>div{flex:1;padding:2mm 3mm;border-left:1px solid #c9d2dc}.wl-ded>div:first-child{border-left:0}.wl-ded>div>span{display:block;font-size:9.5px;color:#5a6878}.wl-ded b .hi{font-size:12px}.wl-ded b{font-size:14px}.wl-ded .amt b{color:#a3241b;font-family:"IBM Plex Mono",monospace;font-size:17px}
 .wl-txt p{margin:0 0 1.5mm;text-align:justify}.wl-txt .hi{font-size:11.5px;line-height:1.6}
-.wl-ack{margin-top:4mm;border:1px dashed #8a96a3;padding:2.5mm 3mm;font-size:10.5px}
-.wl-sg{display:flex;gap:8mm;margin-top:8mm}.wl-sg>div{flex:1;text-align:center;font-size:10px}.wl-sg i{display:block;border-top:1px solid #1a222c;margin-bottom:1.2mm}.wl-sg b{display:block;font-size:11px;min-height:4mm}
-.wl-foot{margin-top:5mm;font-size:9px;color:#8a96a3;text-align:center}`;
+.wl-ack{margin-top:3mm;border:1px dashed #8a96a3;padding:2.5mm 3mm;font-size:10.5px}
+.wl-sg{display:flex;gap:5mm;margin-top:7mm}.wl-sg>div{flex:1;text-align:center;font-size:9.5px;line-height:1.35}.wl-sg i{display:block;border-top:1px solid #1a222c;margin-bottom:1.2mm}.wl-sg b{display:block;font-size:11px;min-height:4mm}
+.wl-foot{margin-top:3mm;font-size:9px;color:#8a96a3;text-align:center}`;
 const rd=s=>s?'<span class="ltr">'+dmy(s)+'</span>':'<span class="mu">—</span>';
 const rt=v=>v?esc(v):'<span class="mu">—</span>';
 const rl=v=>v?'<span class="ltr">'+esc(v)+'</span>':'<span class="mu">—</span>';
@@ -1630,7 +1630,8 @@ function repWarn(w,e){const g=SIGNER(),d=e.photo&&S.pdata[e.photo],lv=wLevel(w.l
    '<div class="wl-ack">I have received this warning letter and I understand its contents. · <span class="hi">मैंने यह चेतावनी पत्र प्राप्त कर लिया है और इसकी सामग्री को समझ लिया है।</span></div>'+
    '<div class="wl-sg"><div><b>&nbsp;</b><i></i>Employee signature · <span class="hi">कर्मचारी के हस्ताक्षर</span><br>Date · <span class="hi">दिनांक</span>: ____/____/________</div>'+
     '<div><b>&nbsp;</b><i></i>Supervisor · <span class="hi">सुपरवाइज़र</span></div>'+
-    '<div><b>'+esc(g.n)+'</b><i></i>'+esc(g.t)+'<br><span class="hi">प्रबंधन</span></div></div>'+
+    '<div><b>'+esc(g.n)+'</b><i></i>'+esc(g.t)+'<br><span class="hi">प्रबंधन</span></div>'+
+    '<div><b>'+esc(S.lists&&S.lists.gmName||'\u00a0')+'</b><i></i>Factory General Manager<br><span class="hi">कारखाना महाप्रबंधक</span></div></div>'+
    '<div class="wl-foot">Copy to: Employee file · Payroll &nbsp;|&nbsp; <span class="hi">प्रति: कर्मचारी फ़ाइल · वेतन विभाग</span></div>'+
   '</div>'}
 
@@ -2330,7 +2331,7 @@ const ACT={
   dlrep:dlReport, export:doExport, runimport:runImport,
   cancelimport:()=>{S.importPlan=null;$('#impres').innerHTML='';$('#impfile').value=''},
   savelists:async()=>{if(!canWrite())return;const Ls={...S.lists};for(const [k] of LIST_LABELS){const vals=[...new Set($('#ls_'+k).value.split('\n').map(s=>s.trim()).filter(Boolean))];Ls[k]=(k==='visaStatuses'||k==='leaveTypes')?vals:vals.sort((a,b)=>a.localeCompare(b))}
-    Ls.signName=$('#signName').value.trim();Ls.signTitle=$('#signTitle').value.trim();const n=parseInt($('#alertDays').value,10);Ls.alertDays=n>0&&n<=365?n:30;try{await S.db.doc('config/lists').set(Ls);toast(_('تم حفظ القوائم','Lists saved'))}catch(err){toast(ERRSAVE())}}
+    Ls.signName=$('#signName').value.trim();Ls.gmName=$('#gmName').value.trim();Ls.signTitle=$('#signTitle').value.trim();const n=parseInt($('#alertDays').value,10);Ls.alertDays=n>0&&n<=365?n:30;try{await S.db.doc('config/lists').set(Ls);toast(_('تم حفظ القوائم','Lists saved'))}catch(err){toast(ERRSAVE())}}
 };
 document.addEventListener('click',ev=>{const t=ev.target.closest('[data-act]');if(t&&ACT[t.dataset.act]){if(t.tagName==='A')return;ACT[t.dataset.act](t,ev);return}
   const th=ev.target.closest('th[data-sort]');if(th){const s=th.dataset.sort;S.f.dir=S.f.sort===s?-S.f.dir:1;S.f.sort=s;fillWorkers()}});

@@ -1628,10 +1628,10 @@ function repWarn(w,e){const g=SIGNER(),d=e.photo&&S.pdata[e.photo],lv=wLevel(w.l
     '<p class="hi">यह पत्र <b>'+dmy(w.d||TODAY)+'</b> को ऊपर लिखे गए उल्लंघन के लिए आपको दी गई औपचारिक <b>'+lvHi+'</b> है। यह व्यवहार कंपनी के नियमों और विनियमों के विरुद्ध है और स्वीकार्य नहीं है।'+dedHi+'</p>'+
     '<p class="hi">'+(fin?'<b>यह आपकी अंतिम चेतावनी है।</b> आगे कोई भी उल्लंघन होने पर, बिना किसी और सूचना के, यूएई श्रम कानून के अनुसार आपकी नौकरी समाप्त कर दी जाएगी।':'आपको कंपनी के नियमों और अपने सुपरवाइज़र के निर्देशों का सख्ती से पालन करने का निर्देश दिया जाता है। इस या किसी अन्य उल्लंघन को दोहराने पर और कड़ी अनुशासनात्मक कार्रवाई की जाएगी, जिसमें यूएई श्रम कानून के अनुसार और वेतन कटौती या नौकरी समाप्त करना शामिल हो सकता है।')+'</p></div>'+
    '<div class="wl-ack">I have received this warning letter and I understand its contents. · <span class="hi">मैंने यह चेतावनी पत्र प्राप्त कर लिया है और इसकी सामग्री को समझ लिया है।</span></div>'+
-   '<div class="wl-sg"><div><b>&nbsp;</b><i></i>Employee signature · <span class="hi">कर्मचारी के हस्ताक्षर</span><br>Date · <span class="hi">दिनांक</span>: ____/____/________</div>'+
-    '<div><b>&nbsp;</b><i></i>Supervisor · <span class="hi">सुपरवाइज़र</span></div>'+
-    '<div><b>'+esc(g.n)+'</b><i></i>'+esc(g.t)+'<br><span class="hi">प्रबंधन</span></div>'+
-    '<div><b>'+esc(S.lists&&S.lists.gmName||'\u00a0')+'</b><i></i>Factory General Manager<br><span class="hi">कारखाना महाप्रबंधक</span></div></div>'+
+   '<div class="wl-sg"><div><b>&nbsp;</b><i></i>Employee signature<br>Date: ____/____/________</div>'+
+    '<div><b>&nbsp;</b><i></i>Supervisor</div>'+
+    '<div><b>'+esc(g.n)+'</b><i></i>'+esc(g.t)+'</div>'+
+    '<div><b>'+esc(S.lists&&S.lists.gmName||'\u00a0')+'</b><i></i>Factory General Manager</div></div>'+
    '<div class="wl-foot">Copy to: Employee file · Payroll &nbsp;|&nbsp; <span class="hi">प्रति: कर्मचारी फ़ाइल · वेतन विभाग</span></div>'+
   '</div>'}
 

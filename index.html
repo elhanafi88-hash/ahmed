@@ -869,7 +869,7 @@ function repTerm(e){const g=SIGNER(),gr=termGratuity(e);
    '<h3 class="lh"><span>4 · Clearance</span></h3>'+
    '<table class="ttbl"><thead><tr><th>Item</th><th>Cleared</th><th>Signed by</th></tr></thead><tbody>'+clr.map(c=>'<tr><td>'+c+'</td><td>'+box+' Yes '+box+' No</td><td></td></tr>').join('')+'</tbody></table>'+
    '<h3 class="lh"><span>5 · Approvals</span></h3>'+
-   '<div class="lsigs t4">'+sig('Direct manager',e.manager||'')+sig(esc(g.t),g.n)+sig('Accounts','')+sig('General manager','')+'</div>'+
+   '<div class="lsigs t4">'+sig('HR','')+sig(esc(g.t),g.n)+sig('Accounts','')+sig('General manager','')+'</div>'+
    '<h3 class="lh"><span>6 · Employee acknowledgement</span></h3>'+
    '<p class="ldecl">I confirm I have completed clearance and received my full final settlement as stated above, and I have no further claims against the company.</p>'+
    '<div class="lsig1">'+sig('Employee signature',e.name)+'<div class="v-th"><em></em><span>Thumb</span></div></div>'+
@@ -893,7 +893,7 @@ function repTermLetter(e){const g=SIGNER();
    '<div class="ltypes tw">'+why.map(t=>'<span>'+box+esc(t)+'</span>').join('')+'</div>'+
    '<p class="ldecl"><b>Details:</b></p>'+line+line+line+line+
    '<h3 class="lh"><span>4 · Approval</span></h3>'+
-   '<div class="lsigs">'+sig('Direct manager',e.manager||'')+sig(esc(g.t),g.n)+sig('Management','')+'</div>'+
+   '<div class="lsigs">'+sig('HR','')+sig(esc(g.t),g.n)+sig('Management','')+'</div>'+
    '<h3 class="lh"><span>5 · Employee acknowledgement</span></h3>'+
    '<p class="ldecl">I acknowledge that I have received and read this termination notice.</p>'+
    '<div class="lsig1">'+sig('Employee signature',e.name)+'<div class="v-th"><em></em><span>Thumb</span></div></div>'+

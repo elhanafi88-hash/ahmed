@@ -390,6 +390,16 @@ body.kiosk-on .side{display:none!important}body.kiosk-on #app{display:block}body
 .k-recent{width:min(560px,100%);background:rgba(255,255,255,.08);border-radius:16px;padding:10px 14px;display:flex;flex-direction:column;gap:6px}.k-rh{opacity:.75;font-size:14px}
 .k-recent>div:not(.k-rh){display:flex;align-items:center;gap:10px;font-size:15px}.k-recent b{font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.k-recent .in{color:#7be3a5;direction:ltr}.k-recent .out{color:#ffb0a6;direction:ltr}
 @media (max-width:600px){.k-time b{font-size:24px}.k-co span{display:none}.k-ph.big{width:130px;height:130px}.k-pad button{font-size:26px;padding:12px 0}}
+@media print{
+#app:has(#modal-root .paperwrap)>:not(#modal-root),body:has(#modal-root .paperwrap)>:not(#app){display:none!important}
+#app:has(#modal-root .paperwrap){display:block!important;height:auto!important;min-height:0!important;overflow:visible!important;background:#fff!important}
+#modal-root:has(.paperwrap) .modal{position:static!important;inset:auto!important;padding:0!important;background:none!important;overflow:visible!important;display:block!important}
+#modal-root:has(.paperwrap) .m-h,#modal-root:has(.paperwrap) .m-f{display:none!important}
+#modal-root:has(.paperwrap) .mbox{border:0!important;border-radius:0!important;width:auto!important;overflow:visible!important;background:#fff!important}
+#modal-root:has(.paperwrap) .m-b{padding:0!important}
+#modal-root .paperwrap{border:0!important;padding:0!important;background:none!important;overflow:visible!important;border-radius:0!important}
+#modal-root .paperwrap .rp{box-shadow:none!important;margin:0 auto!important;padding:0!important;width:auto!important}
+}
 </style>
 
 <div id="app" dir="rtl" lang="ar">
@@ -1364,6 +1374,7 @@ function showReport(inner,filename,title,land,size){
   modal('<div class="mbox wide"><div class="m-h"><h3>'+esc(title)+'</h3><span class="sp"></span><button type="button" class="btn sm" data-act="mclose">✕</button></div>'+
    '<div class="m-f" style="border-top:0;border-bottom:1px solid var(--line)"><button class="btn pri" data-act="prtrep">🖨 '+_('طباعة مباشرة','Print now')+'</button><button class="btn" data-act="dlrep"'+(S.dl?'':' disabled')+'>'+_('تحميل التقرير للطباعة','Download for printing')+'</button><button class="btn" data-act="mclose">'+_('إغلاق','Close')+'</button><span class="muted" style="font-size:12.5px">'+(S.dl?_('هينزل ملف تفتحه في المتصفح، وصفحة الطباعة هتفتح لوحدها، ومنها تطبع أو تحفظه PDF.','A file downloads; open it in your browser and the print dialog opens, where you can print or save as PDF.'):_('التحميل غير متاح في هذا العرض.','Downloads are not available in this view.'))+'</span></div>'+
    '<div class="m-b"><div class="paperwrap">'+inner+'</div></div></div>')}
+document.addEventListener('keydown',ev=>{if((ev.ctrlKey||ev.metaKey)&&!ev.shiftKey&&!ev.altKey&&(ev.key==='p'||ev.key==='P')&&S.rep&&document.querySelector('#modal-root .paperwrap')){ev.preventDefault();printReport()}},true);
 async function printReport(){if(!S.rep)return;const old=document.getElementById('prtframe');if(old)old.remove();
   const f=document.createElement('iframe');f.id='prtframe';f.setAttribute('aria-hidden','true');f.style.cssText='position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden';
   f.srcdoc=S.rep.doc.replace(/<script>addEventListener\("load"[\s\S]*?<\/script>/,'');document.body.appendChild(f);

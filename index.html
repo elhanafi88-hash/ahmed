@@ -1150,6 +1150,16 @@ const REP_CSS=`.rp{background:#fff;color:#1a222c;font-family:"IBM Plex Sans Arab
 .vch .v-sig span{font-size:8px;color:#5a6878}
 .vch .v-th{display:flex;flex-direction:column;align-items:center;gap:.6mm}.vch .v-th em{display:block;width:14mm;height:15mm;border:1px dashed #8a96a3;border-radius:2mm}
 .vch .v-foot{display:flex;justify-content:space-between;margin-top:2.5mm;padding-top:1.4mm;border-top:1px solid #e3e8ed;font-size:7.5px;color:#8a96a3;letter-spacing:.08em;font-family:"IBM Plex Mono",monospace}
+.vch .pc-head{display:grid;grid-template-columns:44mm 1fr 44mm;align-items:center;gap:4mm;margin-top:2mm;padding-bottom:2.5mm;border-bottom:1.2px solid #B39045}
+.vch .pc-title{text-align:center;display:flex;flex-direction:column;gap:1mm}.vch .pc-title b{font-size:17px;letter-spacing:.12em;color:#13283C}.vch .pc-title span{align-self:center;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#7a5c1e;background:#f6efdf;border:1px solid #e4d3ad;border-radius:5mm;padding:.6mm 3mm}
+.vch .pc-no{display:flex;flex-direction:column;gap:1.2mm}.vch .pc-no>div{display:flex;justify-content:space-between;align-items:baseline;border:1px solid #d3dae1;border-radius:1.5mm;padding:1mm 2.5mm}.vch .pc-no span{font-size:7.5px;color:#5a6878;letter-spacing:.06em;text-transform:uppercase}.vch .pc-no b{font-family:"IBM Plex Mono",monospace;font-size:12.5px;color:#1a222c}.vch .pc-no b.red{color:#ae2a21}
+.vch .pc-amt{display:grid;grid-template-columns:50mm 1fr;margin:3.5mm 0 3mm;border:1px solid #13283C;border-radius:1.8mm;overflow:hidden}
+.vch .pc-aed{background:#13283C;color:#fff;padding:2mm 4mm;display:flex;flex-direction:column;justify-content:center;-webkit-print-color-adjust:exact;print-color-adjust:exact}.vch .pc-aed span{font-size:7.5px;letter-spacing:.12em;color:#c9d6e3}.vch .pc-aed b{font-family:"IBM Plex Mono",monospace;font-size:21px;line-height:1.15}
+.vch .pc-wd{padding:2mm 4mm;display:flex;flex-direction:column;justify-content:center;background:#f7f9fb;-webkit-print-color-adjust:exact;print-color-adjust:exact}.vch .pc-wd span{font-size:7.5px;letter-spacing:.08em;text-transform:uppercase;color:#5a6878}.vch .pc-wd b{font-size:12px;color:#13283C}
+.vch .pc-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:2mm 4mm}
+.vch .pc-f{display:flex;flex-direction:column;gap:.4mm;border-bottom:1px dotted #8a96a3;padding-bottom:1mm;min-width:0}.vch .pc-f.w{grid-column:1/-1}.vch .pc-f span{font-size:7.5px;letter-spacing:.06em;text-transform:uppercase;color:#5a6878;font-weight:600}.vch .pc-f b{font-size:12px;color:#1a222c;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vch .pc-ack{margin:3.5mm 0 0;font-size:10.5px;line-height:1.65;color:#1a222c;background:#fbf8f1;border-left:1.2mm solid #B39045;border-radius:1mm;padding:2.2mm 3.5mm;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.vch .pc .v-l b{font-size:10px}
 .vch .v-cut{position:relative;height:3mm;margin:1.5mm 0;border-top:1px dashed #8a96a3;top:1.5mm}.vch .v-cut span{position:absolute;top:-2.4mm;left:4mm;background:#fff;font-size:10px;color:#8a96a3;padding:0 1mm}
 .rp.rcpt{width:210mm;padding:7mm 9mm;font-size:12px}
 .rcpt .rc-top{display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #B39045;padding-bottom:2.5mm;margin-bottom:3mm}
@@ -2210,24 +2220,34 @@ function openCash(ck,pre){const c=ck?S.cash.find(x=>x._k===ck):{d:TODAY,type:'Fa
 const ONES=['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen'],TENS=['','','Twenty','Thirty','Forty','Fifty','Sixty','Seventy','Eighty','Ninety'];
 function w999(n){let s='';if(n>=100){s+=ONES[Math.floor(n/100)]+' Hundred';n%=100;if(n)s+=' '}if(n>=20){s+=TENS[Math.floor(n/10)];if(n%10)s+='-'+ONES[n%10]}else if(n)s+=ONES[n];return s}
 function words(x){x=Math.round(num(x)*100)/100;let n=Math.floor(x),f=Math.round((x-n)*100);if(!n&&!f)return 'Zero Dirhams';const parts=[];for(const [v,l] of [[1e6,'Million'],[1e3,'Thousand']]){if(n>=v){parts.push(w999(Math.floor(n/v))+' '+l);n%=v}}if(n)parts.push(w999(n));return (parts.join(' ')||'Zero')+' Dirhams'+(f?' and '+w999(f)+' Fils':'')+' Only'}
-function vchCopy(c,copy){const e=c.empKey&&byKey(c.empKey),inc=isIn(c),g=SIGNER();const amt=num(c.amt),dh=Math.floor(amt),fl=Math.round((amt-dh)*100);
-  const who=payee(c)||'';const meta=[e&&e.empId?'<span class="ltr">'+esc(e.empId)+'</span>':'',e&&e.designation?esc(e.designation):''].filter(Boolean).join(' · ');
-  const adv=c.type==='Worker Advance'||c.type==='Cash Advance',aTxt=amt.toLocaleString('en-US',{minimumFractionDigits:fl?2:0,maximumFractionDigits:2});const ack=adv?('<span dir="rtl">أقر أنا / <b>'+esc(who||'................')+'</b> بأنني استلمت من الشركة مبلغاً وقدره <b>'+aTxt+' درهم</b> نقداً كسلفة'+(c.type==='Worker Advance'?'، وأوافق على خصمها من راتبي.':'، وأتعهد بردها للشركة.')+'</span><br>I, '+esc(who||'')+', acknowledge that I have received AED '+aTxt+' in cash from the company as an advance'+(c.type==='Worker Advance'?', to be deducted from my salary.':', and undertake to repay it.')):c.type==='Advance Returned'?('Received AED '+aTxt+' as repayment of an advance. · تم استلام مبلغ '+aTxt+' درهم رداً للسلفة.'):(inc?'Received the above amount into the factory petty cash. · تم استلام المبلغ الموضح أعلاه في عهدة المصنع.':'I acknowledge receiving the above amount in cash. · أقر بأنني استلمت المبلغ الموضح أعلاه نقداً.');const row=(en,ar,val,cls)=>'<div class="v-row'+(cls?' '+cls:'')+'"><span class="v-en">'+en+'</span><div class="v-val">'+val+'</div><span class="v-ar">'+ar+'</span></div>';
-  return '<div class="v-copy">'+
-   '<div class="v-tag">'+(copy?'COPY · نسخة':'ORIGINAL · الأصل')+'</div>'+
-   '<div class="v-head"><img class="v-logo" src="'+LOGO+'" alt="METAPLEX"><div class="v-title"><b>'+(inc?'سند قبض نقدي':'سند صرف نقدي')+'</b><span>'+(inc?'CASH RECEIPT VOUCHER':'CASH PAYMENT VOUCHER')+'</span></div>'+
-    '<div class="v-no"><div><span>No. / رقم</span><b class="red">'+esc(c.no||'')+'</b></div><div><span>Date / التاريخ</span><b>'+(c.d?dmy(c.d):'')+'</b></div></div></div>'+
-   '<div class="v-amt"><div class="v-box"><span>AED / درهم</span><b>'+dh.toLocaleString('en-US')+'</b></div><div class="v-box sm"><span>Fils / فلس</span><b>'+String(fl).padStart(2,'0')+'</b></div>'+
-    '<div class="v-type"><span>Type / النوع</span><b>'+esc(ctype(c.type)[1][1])+' · '+esc(ctype(c.type)[1][0])+'</b></div></div>'+
-   row(inc?'Received from':'Paid to',inc?'استلمنا من السيد':'يصرف للسيد','<b>'+esc(who)+'</b>')+(e?row('Emp. Code','','<b class="ltr">'+esc(e.empId||'—')+'</b>')+row('Designation','','<b class="ltr">'+esc(e.designation||'—')+'</b>')+row('Company','','<b class="ltr">'+esc(e.company||'Metaplex Steel')+'</b>'):'')+
-   (c.pid?row('ID / Mobile','رقم الهوية / الموبايل','<span class="ltr">'+esc(c.pid)+'</span>'):'')+
-   row('The sum of','مبلغ وقدره','<b>'+esc(words(amt))+'</b>')+
-   row('Being','وذلك عن','<b>'+esc(ctype(c.type)[1][0])+' · '+esc(ctype(c.type)[1][1])+'</b>'+(c.desc?' — '+esc(c.desc):'')+(c.ref?' <small>· Bill / فاتورة <span class="ltr">'+esc(c.ref)+'</span></small>':''))+
-   (c.type==='Worker Advance'&&c.d?row('Note','ملاحظة','<small>Deducted from salary of '+esc(new Date(+c.d.slice(0,4),+c.d.slice(5,7)-2,1).toLocaleDateString('en-GB',{month:'long',year:'numeric'}))+' · تُخصم من راتب شهر '+esc(new Date(+c.d.slice(0,4),+c.d.slice(5,7)-2,1).toLocaleDateString('ar-EG',{month:'long',year:'numeric'}))+'</small>','note'):'')+
-   '<p class="v-ack'+(adv?' adv':'')+'">'+ack+'</p>'+
-   '<div class="v-sig"><div class="v-rcv"><div class="v-l"><b>'+esc(who)+'</b><i></i><span>'+(inc?'Paid by / المُسلِّم':'Receiver / المستلم')+'</span></div><div class="v-th"><em></em><span>Thumb / بصمة</span></div></div>'+
-    '<div class="v-l"><b>'+esc(g.n)+'</b><i></i><span>Prepared by / إعداد</span></div><div class="v-l"><b>&nbsp;</b><i></i><span>Accounts / الحسابات</span></div><div class="v-l"><b>&nbsp;</b><i></i><span>Approved / اعتماد</span></div></div>'+
-   '<div class="v-foot"><span>METAPLEX STEEL · FACTORY PETTY CASH</span><span>'+esc(c.no||'')+' · '+dmy(TODAY)+'</span></div></div>'}
+function vchCopy(c,copy){const e=c.empKey&&byKey(c.empKey),inc=isIn(c),g=SIGNER();const amt=num(c.amt);
+  const who=payee(c)||'',ty=c.type,tl=ctype(ty)[1][1],co=(e&&e.company)||'Metaplex Steel';
+  const aTxt=amt.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}),wd=words(amt);
+  const dm=c.d?new Date(+c.d.slice(0,4),+c.d.slice(5,7)-2,1).toLocaleDateString('en-GB',{month:'long',year:'numeric'}):'';
+  const nm='<b>'+esc(who||'____________________')+'</b>'+(e&&e.empId?' (Emp. Code <b class="ltr">'+esc(e.empId)+'</b>)':'');
+  const sum='the sum of <b>AED '+aTxt+'</b> ('+esc(wd)+')';
+  const ack=ty==='Worker Advance'?'I, '+nm+', acknowledge that I have received '+sum+' in cash from <b>'+esc(co)+'</b> as a salary advance, and I agree that it will be deducted from my salary for <b>'+esc(dm)+'</b>.'
+   :ty==='Cash Advance'?'I, '+nm+', acknowledge that I have received '+sum+' in cash from <b>'+esc(co)+'</b> as an advance, and I undertake to repay it to the company.'
+   :ty==='Advance Returned'?'Received from '+nm+' '+sum+' in cash as repayment of an advance.'
+   :inc?'Received '+sum+' in cash into the factory petty cash.'
+   :'I, '+nm+', acknowledge that I have received '+sum+' in cash for the purpose stated above.';
+  const f=(k,v,w)=>'<div class="pc-f'+(w?' w':'')+'"><span>'+k+'</span><b>'+(v||'&nbsp;')+'</b></div>';
+  const fields=[f(inc?'Received from':'Paid to',esc(who),!e)];
+  if(e)fields.push(f('Emp. Code','<span class="ltr">'+esc(e.empId||'—')+'</span>'),f('Designation',esc(e.designation||'—')),f('Company',esc(co)));
+  else fields.push(f('Company',esc(co)));
+  if(c.pid)fields.push(f('ID / Mobile','<span class="ltr">'+esc(c.pid)+'</span>'));
+  fields.push(f('Purpose',esc(tl)+(c.desc?' — '+esc(c.desc):''),true));
+  if(c.ref)fields.push(f('Bill / Ref.','<span class="ltr">'+esc(c.ref)+'</span>'));
+  return '<div class="v-copy pc">'+
+   '<div class="v-tag">'+(copy?'COPY':'ORIGINAL')+'</div>'+
+   '<div class="pc-head"><img class="v-logo" src="'+LOGO+'" alt="METAPLEX"><div class="pc-title"><b>'+(inc?'CASH RECEIPT VOUCHER':'CASH PAYMENT VOUCHER')+'</b><span>'+esc(tl)+'</span></div>'+
+    '<div class="pc-no"><div><span>Voucher No.</span><b class="red">'+esc(c.no||'')+'</b></div><div><span>Date</span><b>'+(c.d?dmy(c.d):'')+'</b></div></div></div>'+
+   '<div class="pc-amt"><div class="pc-aed"><span>AMOUNT (AED)</span><b>'+aTxt+'</b></div><div class="pc-wd"><span>Amount in words</span><b>'+esc(wd)+'</b></div></div>'+
+   '<div class="pc-grid">'+fields.join('')+'</div>'+
+   '<div class="pc-ack">'+ack+'</div>'+
+   '<div class="v-sig"><div class="v-rcv"><div class="v-l"><b>'+esc(who)+'</b><i></i><span>'+(inc?'Paid by':'Receiver signature')+'</span></div><div class="v-th"><em></em><span>Thumb</span></div></div>'+
+    '<div class="v-l"><b>'+esc(g.n)+'</b><i></i><span>Prepared by</span></div><div class="v-l"><b>&nbsp;</b><i></i><span>Accounts</span></div><div class="v-l"><b>&nbsp;</b><i></i><span>Approved by</span></div></div>'+
+   '<div class="v-foot"><span>'+esc(co.toUpperCase())+' · FACTORY PETTY CASH</span><span>'+esc(c.no||'')+' · Printed '+dmy(TODAY)+'</span></div></div>'}
 function repReceipt(c){return '<div class="rp vch" dir="ltr">'+vchCopy(c,false)+'<div class="v-cut"><span>✂</span></div>'+vchCopy(c,true)+'</div>'}
 function repCash(){const f=S.cf,P=cashPeriod(),rows=cashFiltered();
   return rShell('<div class="rh"><div style="display:flex;gap:14px;align-items:center"><img src="'+LOGO+'" alt="" style="height:16mm"><div><h1>'+_('كشف الصندوق · العهدة النقدية','Petty Cash Ledger')+'</h1><div style="color:#5a6878">'+(f.m?esc(monthName(f.m)):_('كل الفترات','All periods'))+(f.t?' · '+esc(L(ctype(f.t)[1])):'')+'</div></div></div><div class="meta">'+_('تاريخ الإصدار','Issued on')+'<br>'+rd(TODAY)+'</div></div>'+

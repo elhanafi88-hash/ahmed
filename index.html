@@ -854,7 +854,7 @@ function repTerm(e){const g=SIGNER(),gr=termGratuity(e);
    '<div class="lemp"><div class="lph">'+rAv(e,'sq')+'</div><div class="lgrid">'+
     f('Name','<b>'+esc(e.name)+'</b>','w2')+f('Emp. ID / Code','<b class="mono">'+esc(e.empId||'')+'</b>')+f('Job title',esc(e.designation||''))+f('Department',esc(e.department||''))+f('Nationality',esc(e.nationality||''))+f('Passport no.',m(e.passportNo))+
     f('Emirates ID',m(e.eid))+f('Labour card no.',m(e.labourCard))+f('Joining date',e.joinDate?dmy(e.joinDate):'')+
-    f('Service',e.joinDate?esc(tenure(e.joinDate,e.lastDay)):'')+f('Basic (AED)',money(e.basic))+f('Total salary (AED)',money(totalOf(e)))+f('Direct manager',esc(e.manager||''))+f('Contract type',box+' Limited &nbsp; '+box+' Unlimited')+'</div></div>'+
+    f('Service',e.joinDate?esc(tenure(e.joinDate,e.lastDay)):'')+f('Basic (AED)',money(e.basic))+f('Total salary (AED)',money(totalOf(e)))+f('Contract type',box+' Limited &nbsp; '+box+' Unlimited','w2')+'</div></div>'+
    '<h3 class="lh"><span>2 · Separation details</span></h3>'+
    '<div class="ltypes">'+types.map(t=>'<span>'+box+esc(t)+'</span>').join('')+'</div>'+
    '<div class="lgrid c4">'+f('Notice given on','')+f('Notice period (days)','')+f('Last working day',e.lastDay?dmy(e.lastDay):'')+f('Eligible for rehire',box+' Yes '+box+' No')+
@@ -874,10 +874,24 @@ function repTerm(e){const g=SIGNER(),gr=termGratuity(e);
    '<p class="ldecl">I confirm I have completed clearance and received my full final settlement as stated above, and I have no further claims against the company.</p>'+
    '<div class="lsig1">'+sig('Employee signature',e.name)+'<div class="v-th"><em></em><span>Thumb</span></div></div>'+
    '<div class="v-foot"><span>METAPLEX STEEL · HR</span><span>CLR-'+esc(e.empId||'')+' · '+dmy(TODAY)+'</span></div></div>'}
-async function printTermLetter(k){const e=byKey(k);if(!e)return;await preloadPhotos([e]);showReport(repTermLetter(e),'Termination_Form_'+(e.empId||'')+'.html',_('فورم إنهاء خدمة ','Termination form ')+e.name,false,'A4 portrait')}
-function repTermLetter(e){const g=SIGNER();
+const TERM_WHY=['Poor performance','Misconduct / behaviour','Absence without permission','Absconding (7+ consecutive days)','Violation of company rules / safety','Repeated warnings','Failed probation','Redundancy / no work available','End of contract','Other (see details)'];
+const TERM_QUICK=[['Negligent in his duties','The employee is negligent in performing his duties.'],['Does not follow orders','He does not follow the instructions and orders of his supervisor at work.'],['Frequent absence','He is frequently absent from work without permission.'],['Poor productivity','His productivity is poor and below the required standard.']];
+function openTermLetter(k){const e=byKey(k);if(!e)return;
+  modal('<form id="tform" class="mbox narrow"><div class="m-h"><h3>'+_('فورم إنهاء خدمة','Termination form')+' — '+esc(e.name)+'</h3><span class="sp"></span><button type="button" class="btn sm" data-act="mclose">✕</button></div><div class="m-b"><div class="fg">'+
+   '<label>'+_('تاريخ إنهاء الخدمة','Termination date')+'<input type="date" id="t_date" value="'+TODAY+'"></label><label>'+_('آخر يوم شغل','Last working day')+'<input type="date" id="t_last" value="'+(e.lastDay||'')+'"></label>'+
+   '<label>'+_('مدة الإنذار (أيام)','Notice period (days)')+'<input type="number" id="t_notice" min="0"></label><label>'+_('الإنذار','Notice')+'<select id="t_wn"><option value="">—</option><option value="1">With notice</option><option value="0">Without notice</option></select></label>'+
+   '<div class="full"><b>'+_('أسباب إنهاء الخدمة','Reasons')+'</b><div class="tchk">'+TERM_WHY.map((t,i)=>'<label><input type="checkbox" data-tw="'+i+'"> '+esc(t)+'</label>').join('')+'</div></div>'+
+   '<label class="full">'+_('التفاصيل (بالإنجليزي)','Details (English)')+'<textarea id="t_det" rows="4"></textarea></label></div>'+
+   '<div class="at-qk">'+_('إضافة سريعة:','Quick add:')+' '+TERM_QUICK.map((x,i)=>'<button type="button" class="btn sm" data-tq="'+i+'">'+esc(x[0])+'</button>').join('')+'</div></div>'+
+   '<div class="m-f"><button type="submit" class="btn pri">'+_('إظهار الفورم','Show form')+'</button><button type="button" class="btn" data-act="mclose">'+_('إلغاء','Cancel')+'</button></div></form>');
+  for(const b of document.querySelectorAll('[data-tq]'))b.addEventListener('click',()=>{const t=$('#t_det'),x=TERM_QUICK[+b.dataset.tq][1];if(!t.value.includes(x))t.value=(t.value.trim()?t.value.trim()+' ':'')+x});
+  $('#tform').addEventListener('submit',ev=>{ev.preventDefault();const wn=$('#t_wn').value;
+    const o={date:$('#t_date').value||TODAY,last:$('#t_last').value,notice:$('#t_notice').value,withNotice:wn===''?null:wn==='1',reasons:[...document.querySelectorAll('[data-tw]:checked')].map(c=>TERM_WHY[+c.dataset.tw]),details:$('#t_det').value.trim()};
+    closeModal();printTermLetter(k,o)})}
+async function printTermLetter(k,o){const e=byKey(k);if(!e)return;await preloadPhotos([e]);showReport(repTermLetter(e,o||{}),'Termination_Form_'+(e.empId||'')+'.html',_('فورم إنهاء خدمة ','Termination form ')+e.name,false,'A4 portrait')}
+function repTermLetter(e,o){o=o||{};const g=SIGNER(),rs=o.reasons||[];
   const f=(l,val,cls)=>'<div class="lf'+(cls?' '+cls:'')+'"><div class="lf-l"><span>'+l+'</span></div><div class="lf-v">'+(val||'&nbsp;')+'</div></div>';
-  const box='<i class="cbx"></i>';const m=x=>x?'<span class="mono">'+esc(x)+'</span>':'';
+  const box='<i class="cbx"></i>',bx=on=>'<i class="cbx'+(on?' on':'')+'">'+(on?'✓':'')+'</i>';const m=x=>x?'<span class="mono">'+esc(x)+'</span>':'';
   const sig=(l,name)=>'<div class="ls"><div class="ls-n">'+(name?esc(name):'&nbsp;')+'</div><i></i><span>'+l+'</span><span class="ls-d">Date: ______________</span></div>';
   const why=['Poor performance','Misconduct / behaviour','Absence without permission','Absconding (7+ consecutive days)','Violation of company rules / safety','Repeated warnings','Failed probation','Redundancy / no work available','End of contract','Other (see details)'];
   const line='<div class="tline"></div>';
@@ -886,12 +900,12 @@ function repTermLetter(e){const g=SIGNER();
    '<h3 class="lh"><span>1 · Employee details</span></h3>'+
    '<div class="lemp"><div class="lph">'+rAv(e,'sq')+'</div><div class="lgrid">'+
     f('Name','<b>'+esc(e.name)+'</b>','w2')+f('Emp. ID / Code','<b class="mono">'+esc(e.empId||'')+'</b>')+f('Job title',esc(e.designation||''))+f('Department',esc(e.department||''))+f('Nationality',esc(e.nationality||''))+f('Passport no.',m(e.passportNo))+
-    f('Joining date',e.joinDate?dmy(e.joinDate):'')+f('Direct manager',esc(e.manager||''))+'</div></div>'+
+    f('Joining date',e.joinDate?dmy(e.joinDate):'','w2')+'</div></div>'+
    '<h3 class="lh"><span>2 · Termination</span></h3>'+
-   '<div class="lgrid c4">'+f('Termination date',dmy(TODAY))+f('Last working day',e.lastDay?dmy(e.lastDay):'')+f('Notice period (days)','')+f('Notice',box+' With '+box+' Without','')+'</div>'+
+   '<div class="lgrid c4">'+f('Termination date',dmy(o.date||TODAY))+f('Last working day',o.last?dmy(o.last):(e.lastDay?dmy(e.lastDay):''))+f('Notice period (days)',esc(o.notice||''))+f('Notice',bx(o.withNotice===true)+' With '+bx(o.withNotice===false)+' Without','')+'</div>'+
    '<h3 class="lh"><span>3 · Reason for termination</span></h3>'+
-   '<div class="ltypes tw">'+why.map(t=>'<span>'+box+esc(t)+'</span>').join('')+'</div>'+
-   '<p class="ldecl"><b>Details:</b></p>'+line+line+line+line+
+   '<div class="ltypes tw">'+why.map(t=>'<span>'+bx(rs.includes(t))+esc(t)+'</span>').join('')+'</div>'+
+   '<p class="ldecl"><b>Details:</b></p>'+(o.details?'<p class="tdet">'+esc(o.details).replace(/\n/g,'<br>')+'</p>':line+line+line+line)+
    '<h3 class="lh"><span>4 · Approval</span></h3>'+
    '<div class="lsigs">'+sig('HR','')+sig(esc(g.t),g.n)+sig('Management','')+'</div>'+
    '<h3 class="lh"><span>5 · Employee acknowledgement</span></h3>'+
@@ -1091,6 +1105,9 @@ const REP_CSS=`.rp{background:#fff;color:#1a222c;font-family:"IBM Plex Sans Arab
 .lvf .lsigs{display:grid;grid-template-columns:repeat(3,1fr);gap:7mm;margin-top:2mm}
 .ltypes.tw{display:grid;grid-template-columns:repeat(2,1fr);gap:2.5mm 6mm}
 .tline{border-bottom:1px solid #c9d1da;height:7mm}
+.tdet{margin:1mm 0 2mm;font-size:11px;line-height:1.7;border-bottom:1px solid #c9d1da;padding-bottom:2mm}
+.tchk{display:grid;grid-template-columns:repeat(2,1fr);gap:4px 12px;margin-top:6px;font-size:13px}
+.tchk label{display:flex;gap:6px;align-items:center;font-weight:400}
 .lsigs.t4{grid-template-columns:repeat(4,1fr);gap:5mm}
 .ttbl{font-size:10.5px;margin:1mm 0 2mm}
 .ttbl th,.ttbl td{border:1px solid #c9d1da;padding:1.3mm 2mm;text-align:left}
@@ -2350,7 +2367,7 @@ const ACT={
   newbonus:t=>openBonus(t.dataset.k||''),
   newwarn:t=>openWarn(t.dataset.k||''),
   termform:t=>printTerm(t.dataset.k),
-  termletter:t=>printTermLetter(t.dataset.k),
+  termletter:t=>openTermLetter(t.dataset.k),
   warnltr:t=>{const e=byKey(t.dataset.k),w=e&&(e.warns||[]).find(x=>x.id===t.dataset.w);if(w)showWarn(w,e)},
   delwarn:async t=>{if(!canWrite())return;if(t.dataset.sure!=='1'){t.dataset.sure='1';t.textContent=_('تأكيد الحذف','Confirm delete');return}delWarn(t.dataset.k,t.dataset.w)},
   paytab:t=>{flushPay();S.pay.tab=t.dataset.v;render()},

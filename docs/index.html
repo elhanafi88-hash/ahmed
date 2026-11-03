@@ -852,9 +852,9 @@ function repTerm(e){const g=SIGNER(),gr=termGratuity(e);
    '<div class="v-head"><img class="v-logo" src="'+LOGO+'" alt="METAPLEX"><div class="v-title"><b>EMPLOYEE CLEARANCE FORM</b><span>Final settlement &amp; clearance</span></div><div class="v-no"><div><span>Emp. ID</span><b class="red">'+esc(e.empId||'—')+'</b></div><div><span>Date</span><b>'+dmy(TODAY)+'</b></div></div></div>'+
    '<h3 class="lh"><span>1 · Employee details</span></h3>'+
    '<div class="lemp"><div class="lph">'+rAv(e,'sq')+'</div><div class="lgrid">'+
-    f('Name','<b>'+esc(e.name)+'</b>','w2')+f('Job title',esc(e.designation||''))+f('Department',esc(e.department||''))+f('Nationality',esc(e.nationality||''))+f('Passport no.',m(e.passportNo))+
+    f('Name','<b>'+esc(e.name)+'</b>','w2')+f('Emp. ID / Code','<b class="mono">'+esc(e.empId||'')+'</b>')+f('Job title',esc(e.designation||''))+f('Department',esc(e.department||''))+f('Nationality',esc(e.nationality||''))+f('Passport no.',m(e.passportNo))+
     f('Emirates ID',m(e.eid))+f('Labour card no.',m(e.labourCard))+f('Joining date',e.joinDate?dmy(e.joinDate):'')+
-    f('Service',e.joinDate?esc(tenure(e.joinDate,e.lastDay)):'')+f('Basic (AED)',money(e.basic))+f('Total salary (AED)',money(totalOf(e)))+f('Direct manager',esc(e.manager||''),'w2')+f('Contract type',box+' Limited &nbsp; '+box+' Unlimited')+'</div></div>'+
+    f('Service',e.joinDate?esc(tenure(e.joinDate,e.lastDay)):'')+f('Basic (AED)',money(e.basic))+f('Total salary (AED)',money(totalOf(e)))+f('Direct manager',esc(e.manager||''))+f('Contract type',box+' Limited &nbsp; '+box+' Unlimited')+'</div></div>'+
    '<h3 class="lh"><span>2 · Separation details</span></h3>'+
    '<div class="ltypes">'+types.map(t=>'<span>'+box+esc(t)+'</span>').join('')+'</div>'+
    '<div class="lgrid c4">'+f('Notice given on','')+f('Notice period (days)','')+f('Last working day',e.lastDay?dmy(e.lastDay):'')+f('Eligible for rehire',box+' Yes '+box+' No')+
@@ -885,8 +885,8 @@ function repTermLetter(e){const g=SIGNER();
    '<div class="v-head"><img class="v-logo" src="'+LOGO+'" alt="METAPLEX"><div class="v-title"><b>EMPLOYEE TERMINATION FORM</b><span>Notice of termination of employment</span></div><div class="v-no"><div><span>Emp. ID</span><b class="red">'+esc(e.empId||'—')+'</b></div><div><span>Date</span><b>'+dmy(TODAY)+'</b></div></div></div>'+
    '<h3 class="lh"><span>1 · Employee details</span></h3>'+
    '<div class="lemp"><div class="lph">'+rAv(e,'sq')+'</div><div class="lgrid">'+
-    f('Name','<b>'+esc(e.name)+'</b>','w2')+f('Job title',esc(e.designation||''))+f('Department',esc(e.department||''))+f('Nationality',esc(e.nationality||''))+f('Passport no.',m(e.passportNo))+
-    f('Joining date',e.joinDate?dmy(e.joinDate):'')+f('Direct manager',esc(e.manager||''),'w2')+'</div></div>'+
+    f('Name','<b>'+esc(e.name)+'</b>','w2')+f('Emp. ID / Code','<b class="mono">'+esc(e.empId||'')+'</b>')+f('Job title',esc(e.designation||''))+f('Department',esc(e.department||''))+f('Nationality',esc(e.nationality||''))+f('Passport no.',m(e.passportNo))+
+    f('Joining date',e.joinDate?dmy(e.joinDate):'')+f('Direct manager',esc(e.manager||''))+'</div></div>'+
    '<h3 class="lh"><span>2 · Termination</span></h3>'+
    '<div class="lgrid c4">'+f('Termination date',dmy(TODAY))+f('Last working day',e.lastDay?dmy(e.lastDay):'')+f('Notice period (days)','')+f('Notice',box+' With '+box+' Without','')+'</div>'+
    '<h3 class="lh"><span>3 · Reason for termination</span></h3>'+

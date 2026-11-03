@@ -1156,7 +1156,7 @@ const REP_CSS=`.rp{background:#fff;color:#1a222c;font-family:"IBM Plex Sans Arab
 .vch .pc-amt{display:grid;grid-template-columns:50mm 1fr;margin:3.5mm 0 3mm;border:1px solid #13283C;border-radius:1.8mm;overflow:hidden}
 .vch .pc-aed{background:#13283C;color:#fff;padding:2mm 4mm;display:flex;flex-direction:column;justify-content:center;-webkit-print-color-adjust:exact;print-color-adjust:exact}.vch .pc-aed span{font-size:7.5px;letter-spacing:.12em;color:#c9d6e3}.vch .pc-aed b{font-family:"IBM Plex Mono",monospace;font-size:21px;line-height:1.15}
 .vch .pc-wd{padding:2mm 4mm;display:flex;flex-direction:column;justify-content:center;background:#f7f9fb;-webkit-print-color-adjust:exact;print-color-adjust:exact}.vch .pc-wd span{font-size:7.5px;letter-spacing:.08em;text-transform:uppercase;color:#5a6878}.vch .pc-wd b{font-size:12px;color:#13283C}
-.vch .pc-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:2mm 4mm}
+.vch .pc-grid{display:grid;grid-template-columns:1.7fr .9fr 1.1fr 1.2fr;gap:2.5mm 4mm}.vch .pc-f b .ltr{font-size:inherit;font-family:"IBM Plex Mono",monospace;font-weight:700}
 .vch .pc-f{display:flex;flex-direction:column;gap:.4mm;border-bottom:1px dotted #8a96a3;padding-bottom:1mm;min-width:0}.vch .pc-f.w{grid-column:1/-1}.vch .pc-f span{font-size:7.5px;letter-spacing:.06em;text-transform:uppercase;color:#5a6878;font-weight:600}.vch .pc-f b{font-size:12px;color:#1a222c;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .vch .pc-ack{margin:3.5mm 0 0;font-size:10.5px;line-height:1.65;color:#1a222c;background:#fbf8f1;border-left:1.2mm solid #B39045;border-radius:1mm;padding:2.2mm 3.5mm;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .vch .pc .v-l b{font-size:10px}
@@ -2232,9 +2232,9 @@ function vchCopy(c,copy){const e=c.empKey&&byKey(c.empKey),inc=isIn(c),g=SIGNER(
    :inc?'Received '+sum+' in cash into the factory petty cash.'
    :'I, '+nm+', acknowledge that I have received '+sum+' in cash for the purpose stated above.';
   const f=(k,v,w)=>'<div class="pc-f'+(w?' w':'')+'"><span>'+k+'</span><b>'+(v||'&nbsp;')+'</b></div>';
-  const fields=[f(inc?'Received from':'Paid to',esc(who),!e)];
+  const fields=[f(inc?'Received from':'Paid to',esc(who),false)];
   if(e)fields.push(f('Emp. Code','<span class="ltr">'+esc(e.empId||'—')+'</span>'),f('Designation',esc(e.designation||'—')),f('Company',esc(co)));
-  else fields.push(f('Company',esc(co)));
+  else fields.push(f('Company',esc(co)),'<div></div>','<div></div>');
   if(c.pid)fields.push(f('ID / Mobile','<span class="ltr">'+esc(c.pid)+'</span>'));
   fields.push(f('Purpose',esc(tl)+(c.desc?' — '+esc(c.desc):''),true));
   if(c.ref)fields.push(f('Bill / Ref.','<span class="ltr">'+esc(c.ref)+'</span>'));

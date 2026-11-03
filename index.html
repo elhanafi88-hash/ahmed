@@ -1141,7 +1141,7 @@ const REP_CSS=`.rp{background:#fff;color:#1a222c;font-family:"IBM Plex Sans Arab
 .vch .v-ar{font-size:11px;color:#5a6878;font-weight:600;text-align:right;direction:rtl;padding-bottom:.4mm;font-family:"IBM Plex Sans Arabic",Tahoma,sans-serif}
 .vch .v-val{border-bottom:1px dotted #8a96a3;min-height:6mm;padding:0 1mm .8mm;font-size:12.5px;color:#1a222c}
 .vch .v-val small{font-size:9.5px;color:#5a6878}.vch .v-row.note .v-val small{color:#8a5a00}
-.vch .v-ack{margin:4mm 0 0;font-size:9px;color:#3a4756;text-align:center}
+.vch .v-ack{margin:4mm 0 0;font-size:9px;color:#3a4756;text-align:center}.v-ack.adv{font-size:11px;color:#111;line-height:1.7;border:1px dashed #9aa6b2;border-radius:1.5mm;padding:2mm 3mm}
 .vch .v-sig{margin-top:auto;display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr;gap:5mm;align-items:end}
 .vch .v-rcv{display:flex;gap:3mm;align-items:flex-end}.vch .v-rcv .v-l{flex:1}
 .vch .v-l{display:flex;flex-direction:column;align-items:center;gap:.6mm;text-align:center}
@@ -2211,7 +2211,7 @@ function w999(n){let s='';if(n>=100){s+=ONES[Math.floor(n/100)]+' Hundred';n%=10
 function words(x){x=Math.round(num(x)*100)/100;let n=Math.floor(x),f=Math.round((x-n)*100);if(!n&&!f)return 'Zero Dirhams';const parts=[];for(const [v,l] of [[1e6,'Million'],[1e3,'Thousand']]){if(n>=v){parts.push(w999(Math.floor(n/v))+' '+l);n%=v}}if(n)parts.push(w999(n));return (parts.join(' ')||'Zero')+' Dirhams'+(f?' and '+w999(f)+' Fils':'')+' Only'}
 function vchCopy(c,copy){const e=c.empKey&&byKey(c.empKey),inc=isIn(c),g=SIGNER();const amt=num(c.amt),dh=Math.floor(amt),fl=Math.round((amt-dh)*100);
   const who=payee(c)||'';const meta=[e&&e.empId?'<span class="ltr">'+esc(e.empId)+'</span>':'',e&&e.designation?esc(e.designation):''].filter(Boolean).join(' · ');
-  const row=(en,ar,val,cls)=>'<div class="v-row'+(cls?' '+cls:'')+'"><span class="v-en">'+en+'</span><div class="v-val">'+val+'</div><span class="v-ar">'+ar+'</span></div>';
+  const adv=c.type==='Worker Advance'||c.type==='Cash Advance',aTxt=amt.toLocaleString('en-US',{minimumFractionDigits:fl?2:0,maximumFractionDigits:2});const ack=adv?('<span dir="rtl">أقر أنا / <b>'+esc(who||'................')+'</b> بأنني استلمت من الشركة مبلغاً وقدره <b>'+aTxt+' درهم</b> نقداً كسلفة'+(c.type==='Worker Advance'?'، وأوافق على خصمها من راتبي.':'، وأتعهد بردها للشركة.')+'</span><br>I, '+esc(who||'')+', acknowledge that I have received AED '+aTxt+' in cash from the company as an advance'+(c.type==='Worker Advance'?', to be deducted from my salary.':', and undertake to repay it.')):c.type==='Advance Returned'?('Received AED '+aTxt+' as repayment of an advance. · تم استلام مبلغ '+aTxt+' درهم رداً للسلفة.'):(inc?'Received the above amount into the factory petty cash. · تم استلام المبلغ الموضح أعلاه في عهدة المصنع.':'I acknowledge receiving the above amount in cash. · أقر بأنني استلمت المبلغ الموضح أعلاه نقداً.');const row=(en,ar,val,cls)=>'<div class="v-row'+(cls?' '+cls:'')+'"><span class="v-en">'+en+'</span><div class="v-val">'+val+'</div><span class="v-ar">'+ar+'</span></div>';
   return '<div class="v-copy">'+
    '<div class="v-tag">'+(copy?'COPY · نسخة':'ORIGINAL · الأصل')+'</div>'+
    '<div class="v-head"><img class="v-logo" src="'+LOGO+'" alt="METAPLEX"><div class="v-title"><b>'+(inc?'سند قبض نقدي':'سند صرف نقدي')+'</b><span>'+(inc?'CASH RECEIPT VOUCHER':'CASH PAYMENT VOUCHER')+'</span></div>'+
@@ -2221,9 +2221,9 @@ function vchCopy(c,copy){const e=c.empKey&&byKey(c.empKey),inc=isIn(c),g=SIGNER(
    row(inc?'Received from':'Paid to',inc?'استلمنا من السيد':'يصرف للسيد','<b>'+esc(who)+'</b>'+(meta?' <small>'+meta+'</small>':''))+
    (c.pid?row('ID / Mobile','رقم الهوية / الموبايل','<span class="ltr">'+esc(c.pid)+'</span>'):'')+
    row('The sum of','مبلغ وقدره','<b>'+esc(words(amt))+'</b>')+
-   row('Being','وذلك عن',esc(c.desc||'')+(c.ref?' <small>· Bill / فاتورة <span class="ltr">'+esc(c.ref)+'</span></small>':''))+
+   row('Being','وذلك عن','<b>'+esc(ctype(c.type)[1][0])+' · '+esc(ctype(c.type)[1][1])+'</b>'+(c.desc?' — '+esc(c.desc):'')+(c.ref?' <small>· Bill / فاتورة <span class="ltr">'+esc(c.ref)+'</span></small>':''))+
    (c.type==='Worker Advance'&&c.d?row('Note','ملاحظة','<small>Deducted from salary of '+esc(new Date(+c.d.slice(0,4),+c.d.slice(5,7)-1,1).toLocaleDateString('en-GB',{month:'long',year:'numeric'}))+' · تُخصم من راتب شهر '+esc(new Date(+c.d.slice(0,4),+c.d.slice(5,7)-1,1).toLocaleDateString('ar-EG',{month:'long',year:'numeric'}))+'</small>','note'):'')+
-   '<p class="v-ack">'+(inc?'Received the above amount into the factory petty cash. · تم استلام المبلغ الموضح أعلاه في عهدة المصنع.':'I acknowledge receiving the above amount in cash. · أقر بأنني استلمت المبلغ الموضح أعلاه نقداً.')+'</p>'+
+   '<p class="v-ack'+(adv?' adv':'')+'">'+ack+'</p>'+
    '<div class="v-sig"><div class="v-rcv"><div class="v-l"><b>'+esc(who)+'</b><i></i><span>'+(inc?'Paid by / المُسلِّم':'Receiver / المستلم')+'</span></div><div class="v-th"><em></em><span>Thumb / بصمة</span></div></div>'+
     '<div class="v-l"><b>'+esc(g.n)+'</b><i></i><span>Prepared by / إعداد</span></div><div class="v-l"><b>&nbsp;</b><i></i><span>Accounts / الحسابات</span></div><div class="v-l"><b>&nbsp;</b><i></i><span>Approved / اعتماد</span></div></div>'+
    '<div class="v-foot"><span>METAPLEX STEEL · FACTORY PETTY CASH</span><span>'+esc(c.no||'')+' · '+dmy(TODAY)+'</span></div></div>'}

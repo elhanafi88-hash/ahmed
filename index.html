@@ -2218,7 +2218,7 @@ function vchCopy(c,copy){const e=c.empKey&&byKey(c.empKey),inc=isIn(c),g=SIGNER(
     '<div class="v-no"><div><span>No. / رقم</span><b class="red">'+esc(c.no||'')+'</b></div><div><span>Date / التاريخ</span><b>'+(c.d?dmy(c.d):'')+'</b></div></div></div>'+
    '<div class="v-amt"><div class="v-box"><span>AED / درهم</span><b>'+dh.toLocaleString('en-US')+'</b></div><div class="v-box sm"><span>Fils / فلس</span><b>'+String(fl).padStart(2,'0')+'</b></div>'+
     '<div class="v-type"><span>Type / النوع</span><b>'+esc(ctype(c.type)[1][1])+' · '+esc(ctype(c.type)[1][0])+'</b></div></div>'+
-   row(inc?'Received from':'Paid to',inc?'استلمنا من السيد':'يصرف للسيد','<b>'+esc(who)+'</b>'+(meta?' <small>'+meta+'</small>':''))+
+   row(inc?'Received from':'Paid to',inc?'استلمنا من السيد':'يصرف للسيد','<b>'+esc(who)+'</b>')+(e?row('Code · Designation','الكود · المهنة','<b class="ltr">'+esc(e.empId||'—')+'</b> &nbsp;·&nbsp; <b>'+esc(e.designation||'—')+'</b>'):'')+
    (c.pid?row('ID / Mobile','رقم الهوية / الموبايل','<span class="ltr">'+esc(c.pid)+'</span>'):'')+
    row('The sum of','مبلغ وقدره','<b>'+esc(words(amt))+'</b>')+
    row('Being','وذلك عن','<b>'+esc(ctype(c.type)[1][0])+' · '+esc(ctype(c.type)[1][1])+'</b>'+(c.desc?' — '+esc(c.desc):'')+(c.ref?' <small>· Bill / فاتورة <span class="ltr">'+esc(c.ref)+'</span></small>':''))+

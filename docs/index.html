@@ -839,7 +839,7 @@ function repLeave(l){const e=byKey(l.empKey)||{name:''},g=SIGNER();const days=sp
    '<div class="lgrid c4">'+f('Actual return date','تاريخ العودة الفعلي',l.returned?dmy(l.returned):'','w2')+f('Days late','أيام التأخير','','w2')+'</div>'+
    '<div class="lsigs">'+sig('Employee','الموظف','')+sig('Supervisor','المشرف','')+sig('HR','الموارد البشرية',g.n)+'</div>'+
    '<div class="v-foot"><span>METAPLEX STEEL · HR</span><span>'+esc(leaveNo(l))+' · '+dmy(TODAY)+'</span></div></div>'}
-async function printTerm(k){const e=byKey(k);if(!e)return;await preloadPhotos([e]);showReport(repTerm(e),'Termination_Form_'+(e.empId||'')+'.html',_('فورم إنهاء خدمة ','Termination form ')+e.name,false,'A4 portrait')}
+async function printTerm(k){const e=byKey(k);if(!e)return;await preloadPhotos([e]);showReport(repTerm(e),'Clearance_Form_'+(e.empId||'')+'.html',_('فورم كليرانس ','Clearance form ')+e.name,false,'A4 portrait')}
 function termGratuity(e){if(!e.joinDate)return null;const end=e.lastDay||TODAY,yrs=(pd(end)-pd(e.joinDate))/(365*864e5);if(yrs<1)return{yrs,amt:0};const d=num(e.basic)/30;let a=Math.min(yrs,5)*21*d+Math.max(yrs-5,0)*30*d;a=Math.min(a,totalOf(e)*24);return{yrs,amt:a}}
 function repTerm(e){const g=SIGNER(),gr=termGratuity(e);
   const f=(l,val,cls)=>'<div class="lf'+(cls?' '+cls:'')+'"><div class="lf-l"><span>'+l+'</span></div><div class="lf-v">'+(val||'&nbsp;')+'</div></div>';
@@ -849,16 +849,16 @@ function repTerm(e){const g=SIGNER(),gr=termGratuity(e);
   const row=(a,b,c)=>'<tr><td>'+a+'</td><td>'+(b||'')+'</td><td class="num">'+(c||'')+'</td></tr>';
   const clr=['Tools & PPE returned (Site / Store)','Company ID / access card','Accommodation room & keys','Company vehicle / fuel card','Laptop / phone / SIM','Accounts — advances & loans settled','HR — visa & labour card cancellation','HR — medical insurance cancelled','Passport returned to employee'];
   return '<div class="rp lvf" dir="ltr">'+
-   '<div class="v-head"><img class="v-logo" src="'+LOGO+'" alt="METAPLEX"><div class="v-title"><b>EMPLOYEE TERMINATION FORM</b><span>Final settlement &amp; clearance</span></div><div class="v-no"><div><span>Emp. ID</span><b class="red">'+esc(e.empId||'—')+'</b></div><div><span>Date</span><b>'+dmy(TODAY)+'</b></div></div></div>'+
+   '<div class="v-head"><img class="v-logo" src="'+LOGO+'" alt="METAPLEX"><div class="v-title"><b>EMPLOYEE CLEARANCE FORM</b><span>Final settlement &amp; clearance</span></div><div class="v-no"><div><span>Emp. ID</span><b class="red">'+esc(e.empId||'—')+'</b></div><div><span>Date</span><b>'+dmy(TODAY)+'</b></div></div></div>'+
    '<h3 class="lh"><span>1 · Employee details</span></h3>'+
    '<div class="lemp"><div class="lph">'+rAv(e,'sq')+'</div><div class="lgrid">'+
     f('Name','<b>'+esc(e.name)+'</b>','w2')+f('Job title',esc(e.designation||''))+f('Department',esc(e.department||''))+f('Nationality',esc(e.nationality||''))+f('Passport no.',m(e.passportNo))+
     f('Emirates ID',m(e.eid))+f('Labour card no.',m(e.labourCard))+f('Joining date',e.joinDate?dmy(e.joinDate):'')+
     f('Service',e.joinDate?esc(tenure(e.joinDate,e.lastDay)):'')+f('Basic (AED)',money(e.basic))+f('Total salary (AED)',money(totalOf(e)))+f('Direct manager',esc(e.manager||''),'w2')+f('Contract type',box+' Limited &nbsp; '+box+' Unlimited')+'</div></div>'+
-   '<h3 class="lh"><span>2 · Termination details</span></h3>'+
+   '<h3 class="lh"><span>2 · Separation details</span></h3>'+
    '<div class="ltypes">'+types.map(t=>'<span>'+box+esc(t)+'</span>').join('')+'</div>'+
    '<div class="lgrid c4">'+f('Notice given on','')+f('Notice period (days)','')+f('Last working day',e.lastDay?dmy(e.lastDay):'')+f('Eligible for rehire',box+' Yes '+box+' No')+
-    f('Notice',box+' Served &nbsp; '+box+' Paid in lieu &nbsp; '+box+' Waived','w2')+f('Supporting documents (warnings, memos)','','w2')+f('Reason for termination','<br><br>','w4')+'</div>'+
+    f('Notice',box+' Served &nbsp; '+box+' Paid in lieu &nbsp; '+box+' Waived','w2')+f('Supporting documents (warnings, memos)','','w2')+f('Reason for leaving','<br><br>','w4')+'</div>'+
    '<h3 class="lh"><span>3 · Final settlement</span><em>Gratuity: 21 days basic/yr (first 5 yrs), 30 days after; none under 1 yr; max 2 yrs total salary</em></h3>'+
    '<table class="ttbl"><thead><tr><th>Item</th><th>Days / basis</th><th>Amount (AED)</th></tr></thead><tbody>'+
     row('Salary for days worked (last month)')+row('Unused annual leave')+row('Notice period pay (if paid in lieu)')+
@@ -871,7 +871,31 @@ function repTerm(e){const g=SIGNER(),gr=termGratuity(e);
    '<h3 class="lh"><span>5 · Approvals</span></h3>'+
    '<div class="lsigs t4">'+sig('Direct manager',e.manager||'')+sig('HR / Prepared by',g.n)+sig('Accounts','')+sig('General manager','')+'</div>'+
    '<h3 class="lh"><span>6 · Employee acknowledgement</span></h3>'+
-   '<p class="ldecl">I confirm I have received this termination notice and my full final settlement as stated above, and I have no further claims against the company.</p>'+
+   '<p class="ldecl">I confirm I have completed clearance and received my full final settlement as stated above, and I have no further claims against the company.</p>'+
+   '<div class="lsig1">'+sig('Employee signature',e.name)+'<div class="v-th"><em></em><span>Thumb</span></div></div>'+
+   '<div class="v-foot"><span>METAPLEX STEEL · HR</span><span>CLR-'+esc(e.empId||'')+' · '+dmy(TODAY)+'</span></div></div>'}
+async function printTermLetter(k){const e=byKey(k);if(!e)return;await preloadPhotos([e]);showReport(repTermLetter(e),'Termination_Form_'+(e.empId||'')+'.html',_('فورم إنهاء خدمة ','Termination form ')+e.name,false,'A4 portrait')}
+function repTermLetter(e){const g=SIGNER();
+  const f=(l,val,cls)=>'<div class="lf'+(cls?' '+cls:'')+'"><div class="lf-l"><span>'+l+'</span></div><div class="lf-v">'+(val||'&nbsp;')+'</div></div>';
+  const box='<i class="cbx"></i>';const m=x=>x?'<span class="mono">'+esc(x)+'</span>':'';
+  const sig=(l,name)=>'<div class="ls"><div class="ls-n">'+(name?esc(name):'&nbsp;')+'</div><i></i><span>'+l+'</span><span class="ls-d">Date: ______________</span></div>';
+  const why=['Poor performance','Misconduct / behaviour','Absence without permission','Absconding (7+ consecutive days)','Violation of company rules / safety','Repeated warnings','Failed probation','Redundancy / no work available','End of contract','Other (see details)'];
+  const line='<div class="tline"></div>';
+  return '<div class="rp lvf" dir="ltr">'+
+   '<div class="v-head"><img class="v-logo" src="'+LOGO+'" alt="METAPLEX"><div class="v-title"><b>EMPLOYEE TERMINATION FORM</b><span>Notice of termination of employment</span></div><div class="v-no"><div><span>Emp. ID</span><b class="red">'+esc(e.empId||'—')+'</b></div><div><span>Date</span><b>'+dmy(TODAY)+'</b></div></div></div>'+
+   '<h3 class="lh"><span>1 · Employee details</span></h3>'+
+   '<div class="lemp"><div class="lph">'+rAv(e,'sq')+'</div><div class="lgrid">'+
+    f('Name','<b>'+esc(e.name)+'</b>','w2')+f('Job title',esc(e.designation||''))+f('Department',esc(e.department||''))+f('Nationality',esc(e.nationality||''))+f('Passport no.',m(e.passportNo))+
+    f('Joining date',e.joinDate?dmy(e.joinDate):'')+f('Direct manager',esc(e.manager||''),'w2')+'</div></div>'+
+   '<h3 class="lh"><span>2 · Termination</span></h3>'+
+   '<div class="lgrid c4">'+f('Termination date',dmy(TODAY))+f('Last working day',e.lastDay?dmy(e.lastDay):'')+f('Notice period (days)','')+f('Notice',box+' With '+box+' Without','')+'</div>'+
+   '<h3 class="lh"><span>3 · Reason for termination</span></h3>'+
+   '<div class="ltypes tw">'+why.map(t=>'<span>'+box+esc(t)+'</span>').join('')+'</div>'+
+   '<p class="ldecl"><b>Details:</b></p>'+line+line+line+line+
+   '<h3 class="lh"><span>4 · Approval</span></h3>'+
+   '<div class="lsigs">'+sig('Direct manager',e.manager||'')+sig('HR',g.n)+sig('Management','')+'</div>'+
+   '<h3 class="lh"><span>5 · Employee acknowledgement</span></h3>'+
+   '<p class="ldecl">I acknowledge that I have received and read this termination notice.</p>'+
    '<div class="lsig1">'+sig('Employee signature',e.name)+'<div class="v-th"><em></em><span>Thumb</span></div></div>'+
    '<div class="v-foot"><span>METAPLEX STEEL · HR</span><span>TERM-'+esc(e.empId||'')+' · '+dmy(TODAY)+'</span></div></div>'}
 function leaveDays(l){const end=l.returned&&l.returned<=l.to?addDays(l.returned,-1):l.to;return end<l.from?0:span(l.from,end)}
@@ -904,7 +928,7 @@ function renderDrawer(){const root=$('#drawer-root');const e=S.open&&byKey(S.ope
   const my=S.leaves.filter(l=>l.empKey===e._k).sort((a,b)=>b.from.localeCompare(a.from));
   const annual=my.filter(l=>l.type==='Annual Leave'&&l.from.startsWith(THIS_YEAR)).reduce((s,l)=>s+leaveDays(l),0);
   root.innerHTML='<div class="shade" data-act="close"></div><aside class="drawer" role="dialog" aria-label="'+_('ملف العامل','Worker profile')+'">'+
-  '<div class="dr-h"><div class="r"><button class="btn sm" data-act="close">✕ '+_('إغلاق','Close')+'</button><span class="sp"></span><button class="btn sm" data-act="repone" data-k="'+e._k+'">'+_('تقرير','Report')+'</button><button class="btn sm" data-act="newbonus" data-k="'+e._k+'">'+_('مكافأة','Bonus')+'</button><button class="btn sm" data-act="newwarn" data-k="'+e._k+'">'+_('إنذار','Warning')+'</button><button class="btn sm" data-act="termform" data-k="'+e._k+'">'+_('إنهاء خدمة','Termination')+'</button><button class="btn sm" data-act="newraise" data-k="'+e._k+'">'+_('زيادة راتب','Raise')+'</button><button class="btn sm" data-act="newleave" data-k="'+e._k+'">'+_('تسجيل إجازة','Record leave')+'</button><button class="btn sm pri" data-act="edit" data-k="'+e._k+'">'+_('تعديل','Edit')+'</button><button class="btn sm danger" data-act="askdel">'+_('حذف','Delete')+'</button></div>'+
+  '<div class="dr-h"><div class="r"><button class="btn sm" data-act="close">✕ '+_('إغلاق','Close')+'</button><span class="sp"></span><button class="btn sm" data-act="repone" data-k="'+e._k+'">'+_('تقرير','Report')+'</button><button class="btn sm" data-act="newbonus" data-k="'+e._k+'">'+_('مكافأة','Bonus')+'</button><button class="btn sm" data-act="newwarn" data-k="'+e._k+'">'+_('إنذار','Warning')+'</button><button class="btn sm" data-act="termform" data-k="'+e._k+'">'+_('كليرانس','Clearance')+'</button><button class="btn sm" data-act="termletter" data-k="'+e._k+'">'+_('إنهاء خدمة','Termination')+'</button><button class="btn sm" data-act="newraise" data-k="'+e._k+'">'+_('زيادة راتب','Raise')+'</button><button class="btn sm" data-act="newleave" data-k="'+e._k+'">'+_('تسجيل إجازة','Record leave')+'</button><button class="btn sm pri" data-act="edit" data-k="'+e._k+'">'+_('تعديل','Edit')+'</button><button class="btn sm danger" data-act="askdel">'+_('حذف','Delete')+'</button></div>'+
    (S.confirmDel?'<div class="confirm">'+_('حذف '+esc(e.name)+' وكل إجازاته نهائيًا؟','Delete '+esc(e.name)+' and all their leaves permanently?')+'<span style="flex:1"></span><button class="btn sm danger" data-act="del" data-k="'+e._k+'">'+_('نعم، احذف','Yes, delete')+'</button><button class="btn sm" data-act="canceldel">'+_('إلغاء','Cancel')+'</button></div>':'')+
    '<div class="dr-top"><span data-act="photo" data-k="'+e._k+'" title="'+_('تغيير الصورة','Change photo')+'">'+avatar(e,'lg')+'</span><div style="min-width:0;display:flex;flex-direction:column;gap:4px"><h2>'+esc(e.name)+'</h2><div class="r">'+idHtml(e)+'<span class="muted">·</span><span>'+t(e.designation)+'</span></div>'+(S.assets?'<div><button class="link" data-act="photo" data-k="'+e._k+'">'+(e.photo?_('تغيير الصورة','Change photo'):_('إضافة صورة','Add photo'))+'</button></div>':'')+'</div></div>'+
    '<div class="quick"><label>'+_('حالة العمل','Work status')+'<select data-chg="st" data-k="'+e._k+'">'+opts(STATUSES,e.status||'','status',_('غير محددة','Not set'))+'</select></label><label>'+_('حالة التأشيرة','Visa status')+'<select data-chg="vs" data-k="'+e._k+'">'+opts(listOf('visaStatuses','visaStatus'),e.visaStatus||'','visaStatus',_('غير محددة','Not set'))+'</select></label></div></div>'+
@@ -1065,6 +1089,8 @@ const REP_CSS=`.rp{background:#fff;color:#1a222c;font-family:"IBM Plex Sans Arab
 .lvf .ldec{display:flex;align-items:center;gap:2mm;font-size:11px;margin-bottom:1mm}.lvf .ldec .cbx{margin-inline-start:6mm}.lvf .ldec .cbx:first-child{margin-inline-start:0}
 .lvf .lsig1{display:flex;gap:6mm;align-items:flex-end;margin-top:2mm;max-width:120mm}.lvf .lsig1 .ls{flex:1}
 .lvf .lsigs{display:grid;grid-template-columns:repeat(3,1fr);gap:7mm;margin-top:2mm}
+.ltypes.tw{display:grid;grid-template-columns:repeat(2,1fr);gap:2.5mm 6mm}
+.tline{border-bottom:1px solid #c9d1da;height:7mm}
 .lsigs.t4{grid-template-columns:repeat(4,1fr);gap:5mm}
 .ttbl{font-size:10.5px;margin:1mm 0 2mm}
 .ttbl th,.ttbl td{border:1px solid #c9d1da;padding:1.3mm 2mm;text-align:left}
@@ -1894,7 +1920,7 @@ function renderProfile(v){const k=location.hash.slice(3),e=byKey(k);
   else if(tab==='bonus')body=panel(_('المكافآت','Bonuses'),'<button class="btn sm pri" data-act="newbonus" data-k="'+k+'">+ '+_('مكافأة جديدة','New bonus')+'</button>',bon.length?'<div class="tw"><table><thead><tr><th>'+_('التاريخ','Date')+'</th><th>'+_('السبب','Reason')+'</th><th>'+_('المبلغ','Amount')+'</th><th>'+_('رقم الشهادة','Certificate')+'</th><th></th></tr></thead><tbody>'+bon.map(b=>'<tr><td>'+fmt(b.date)+'</td><td class="wrap">'+esc(b.reason||'')+'</td><td class="num">'+money(b.amount)+'</td><td class="id">'+esc(b.certNo||'')+'</td><td><button class="btn sm pri" data-act="cert" data-b="'+b._k+'">'+_('الشهادة','Certificate')+'</button></td></tr>').join('')+'</tbody></table></div>':'<div class="empty" style="padding:16px">'+_('لا توجد مكافآت.','No bonuses.')+'</div>',true);
   else if(tab==='warn')body=warnPanel(e,k);
   else body=panel(_('السجل','History'),'','<ul class="log">'+[...(e.log||[])].reverse().map(x=>'<li><span>'+fmt(x.d)+'</span><span>'+esc(x.t)+'</span></li>').join('')+'</ul><div class="addlog"><input type="text" id="lognote" placeholder="'+_('أضف ملاحظة للسجل (مثلاً: سلّم الجواز للمندوب)','Add a note (e.g. passport handed to PRO)')+'"><button class="btn" data-act="addlog" data-k="'+k+'">'+_('إضافة','Add')+'</button></div>');
-  v.innerHTML='<div class="head"><a class="btn sm" href="#workers">'+(LANG==='en'?'← ':'→ ')+_('العمال','Workers')+'</a><h2>'+_('ملف العامل','Worker profile')+'</h2><span class="sp"></span>'+'<input type="month" id="ptm" value="'+TODAY.slice(0,7)+'" title="'+_('الشهر','Month')+'" style="width:auto"><button class="btn" data-act="ptsheet" data-k="'+k+'">'+_('كشف الحضور','Attendance sheet')+'</button>'+(S.assets?'<button class="btn'+(e.photo?'':' pri')+'" data-act="ppphoto" data-k="'+k+'">🛂 '+_('صورة من الجواز','Photo from passport')+'</button>':'')+'<button class="btn" data-act="repone" data-k="'+k+'">'+_('تقرير للطباعة','Print report')+'</button><button class="btn" data-act="termform" data-k="'+k+'">'+_('إنهاء خدمة','Termination')+'</button><button class="btn pri" data-act="edit" data-k="'+k+'">'+_('تعديل البيانات','Edit details')+'</button><button class="btn danger" data-act="askdel">'+_('حذف','Delete')+'</button></div>'+
+  v.innerHTML='<div class="head"><a class="btn sm" href="#workers">'+(LANG==='en'?'← ':'→ ')+_('العمال','Workers')+'</a><h2>'+_('ملف العامل','Worker profile')+'</h2><span class="sp"></span>'+'<input type="month" id="ptm" value="'+TODAY.slice(0,7)+'" title="'+_('الشهر','Month')+'" style="width:auto"><button class="btn" data-act="ptsheet" data-k="'+k+'">'+_('كشف الحضور','Attendance sheet')+'</button>'+(S.assets?'<button class="btn'+(e.photo?'':' pri')+'" data-act="ppphoto" data-k="'+k+'">🛂 '+_('صورة من الجواز','Photo from passport')+'</button>':'')+'<button class="btn" data-act="repone" data-k="'+k+'">'+_('تقرير للطباعة','Print report')+'</button><button class="btn" data-act="termform" data-k="'+k+'">'+_('كليرانس','Clearance')+'</button><button class="btn" data-act="termletter" data-k="'+k+'">'+_('إنهاء خدمة','Termination')+'</button><button class="btn pri" data-act="edit" data-k="'+k+'">'+_('تعديل البيانات','Edit details')+'</button><button class="btn danger" data-act="askdel">'+_('حذف','Delete')+'</button></div>'+
   (S.confirmDel?'<div class="confirm">'+_('حذف '+esc(e.name)+' وكل إجازاته نهائيًا؟','Delete '+esc(e.name)+' and all their leaves permanently?')+'<span style="flex:1"></span><button class="btn sm danger" data-act="del" data-k="'+k+'">'+_('نعم، احذف','Yes, delete')+'</button><button class="btn sm" data-act="canceldel">'+_('إلغاء','Cancel')+'</button></div>':'')+
   '<section class="panel phero"><div class="ph-av"'+(S.assets?' data-act="photo" data-k="'+k+'" title="'+_('تغيير الصورة','Change photo')+'"':'')+'>'+avatar(e,'xl')+(S.assets?'<span class="ph-cam">'+svg('camera')+'</span>':'')+'</div>'+
    '<div class="ph-main"><div class="ph-name">'+esc(e.name)+'</div><div class="ph-sub">'+idHtml(e)+'<span class="muted">·</span><b>'+t(e.designation)+'</b></div>'+
@@ -2324,6 +2350,7 @@ const ACT={
   newbonus:t=>openBonus(t.dataset.k||''),
   newwarn:t=>openWarn(t.dataset.k||''),
   termform:t=>printTerm(t.dataset.k),
+  termletter:t=>printTermLetter(t.dataset.k),
   warnltr:t=>{const e=byKey(t.dataset.k),w=e&&(e.warns||[]).find(x=>x.id===t.dataset.w);if(w)showWarn(w,e)},
   delwarn:async t=>{if(!canWrite())return;if(t.dataset.sure!=='1'){t.dataset.sure='1';t.textContent=_('تأكيد الحذف','Confirm delete');return}delWarn(t.dataset.k,t.dataset.w)},
   paytab:t=>{flushPay();S.pay.tab=t.dataset.v;render()},

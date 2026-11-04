@@ -777,7 +777,9 @@ function filteredWorkers(){const f=S.f,q=f.q.trim().toLowerCase();
     return true});
   const s=f.sort,dir=f.dir;
   const key=e=>s==='near'?(nearest(e)?.n??99999):s==='sn'?(e.sn||0):String(e[s]||'￿').toLowerCase();
-  return list.sort((a,b)=>{const x=key(a),y=key(b);return (x<y?-1:x>y?1:0)*dir})}
+  const pin=e=>{const i=PIN_TOP.indexOf(String(e.empId||''));return i<0?99:i};
+  return list.sort((a,b)=>{if(s==='sn'&&dir>0){const pa=pin(a),pb=pin(b);if(pa!==pb)return pa-pb}const x=key(a),y=key(b);return (x<y?-1:x>y?1:0)*dir})}
+const PIN_TOP=['44117','MET001','MET028'];
 const EXTRA={miss:v=>L(MISS[v]?.l),nat:v=>_('الجنسية: ','Nationality: ')+(v==='_none'?_('غير محددة','Not set'):tr('nationality',v)),vt:v=>tr('visaType',v),loc:v=>_('الموقع: ','Location: ')+tr('location',v)};
 function renderWorkers(v){const f=S.f;
   const chips=Object.keys(EXTRA).filter(k=>f[k]&&k!=='miss').map(k=>'<button class="chip" data-act="unf" data-v="'+k+'">'+esc(EXTRA[k](f[k]))+' ✕</button>').join('');

@@ -843,6 +843,7 @@ function repLeave(l){const e=byKey(l.empKey)||{name:''},g=SIGNER();const days=sp
    '<div class="ltypes">'+types.map(t=>'<span>'+box(t===l.type)+esc(t)+' <span class="ar">'+esc(tr('leaveType',t))+'</span></span>').join('')+'</div>'+
    '<div class="lgrid c4">'+f('From','من',dmy(l.from))+f('To','إلى',dmy(l.to))+f('Total days','عدد الأيام','<b>'+days+'</b>')+f('Return to work','تاريخ العودة للعمل',dmy(ret))+
     f('Destination','مكان الإجازة',esc(l.dest||''),'w2')+f('Contact no.','رقم التواصل','<span class="mono">'+esc(l.contact||e.mobile||'')+'</span>','w2')+
+    f('Departure airport','مطار السفر',esc(l.depAir||''),'w2')+f('Ticket','نوع التذكرة',l.trip?(l.trip==='round'?'Round trip · ذهاب وعودة':'One way · ذهاب فقط'):'')+f('Return airport','مطار العودة',l.trip==='round'?esc(l.retAir||''):'—')+
     f('Reason','سبب الإجازة',esc(l.notes||''),'w4')+
     f('Last leave','آخر إجازة',last?dmy(last.from)+' – '+dmy(last.to)+' ('+esc(tr('leaveType',last.type))+')':'—','w2')+f('Taken this year','أيام نفس النوع في '+yr,String(taken),'w2')+'</div>'+
    '<h3 class="lh"><span>3 · Employee declaration</span><span class="ar">إقرار الموظف</span></h3>'+
@@ -1033,12 +1034,17 @@ function openLeave(k){const act=active().sort((a,b)=>a.name.localeCompare(b.name
    '<label class="full">'+_('نوع الإجازة','Leave type')+'<select id="l_type">'+opts(S.lists.leaveTypes||DEFAULT_LISTS.leaveTypes,'Annual Leave','leaveType')+'</select></label>'+
    '<label>'+_('من','From')+' <span class="req">*</span><input type="date" id="l_from" value="'+TODAY+'"></label><label>'+_('إلى','To')+' <span class="req">*</span><input type="date" id="l_to" value="'+addDays(TODAY,29)+'"></label>'+
    '<label class="full">'+_('سبب الإجازة / ملاحظات','Reason / notes')+'<input type="text" id="l_notes"></label>'+
-   '<label>'+_('مكان قضاء الإجازة','Destination')+'<input type="text" id="l_dest" dir="auto" placeholder="'+_('مثلاً: الهند – كيرالا','e.g. India – Kerala')+'"></label><label>'+_('رقم التواصل أثناء الإجازة','Contact during leave')+'<input type="text" id="l_contact" dir="ltr"></label></div><div class="sub" id="l_days"></div><div class="err" id="lerr"></div></div>'+
+   '<label>'+_('مكان قضاء الإجازة','Destination')+'<input type="text" id="l_dest" dir="auto" placeholder="'+_('مثلاً: الهند – كيرالا','e.g. India – Kerala')+'"></label><label>'+_('رقم التواصل أثناء الإجازة','Contact during leave')+'<input type="text" id="l_contact" dir="ltr"></label>'+
+   '<label>'+_('مطار السفر','Departure airport')+'<input type="text" id="l_dep" list="dl_air" dir="auto" placeholder="'+_('مثلاً: DXB – دبي','e.g. DXB – Dubai')+'"></label>'+
+   '<label>'+_('نوع التذكرة','Ticket')+'<select id="l_trip"><option value="oneway">'+_('ذهاب فقط (One way)','One way')+'</option><option value="round">'+_('ذهاب وعودة (2 way)','Round trip (2 way)')+'</option></select></label>'+
+   '<label class="full" id="l_retw" style="display:none">'+_('مطار العودة (الوصول)','Return airport (arrival)')+'<input type="text" id="l_ret" list="dl_air" dir="auto" placeholder="'+_('المطار اللي هيرجع عليه','Airport of return')+'"></label>'+
+   '<datalist id="dl_air">'+[...new Set(['DXB – Dubai','SHJ – Sharjah','AUH – Abu Dhabi','DWC – Al Maktoum','RKT – Ras Al Khaimah',...S.leaves.flatMap(x=>[x.depAir,x.retAir]).filter(Boolean)])].map(x=>'<option value="'+esc(x)+'">').join('')+'</datalist></div><div class="sub" id="l_days"></div><div class="err" id="lerr"></div></div>'+
    '<div class="m-f"><button type="submit" class="btn pri" data-print="1">'+_('حفظ وطباعة طلب الإجازة','Save & print leave form')+'</button><button type="submit" class="btn">'+_('حفظ الإجازة','Save leave')+'</button><button type="button" class="btn" data-act="mclose">'+_('إلغاء','Cancel')+'</button></div></form>');
   const upd=()=>{const f=$('#l_from').value,t=$('#l_to').value;$('#l_days').textContent=f&&t&&t>=f?_('المدة: ','Duration: ')+span(f,t)+' '+_('يوم','days'):''};upd();
   $('#l_from').addEventListener('input',upd);$('#l_to').addEventListener('input',upd);
+  $('#l_trip').addEventListener('change',()=>{$('#l_retw').style.display=$('#l_trip').value==='round'?'':'none'});
   $('#lvform').addEventListener('submit',async ev=>{ev.preventDefault();if(!canWrite())return;const wantPrint=!!(ev.submitter&&ev.submitter.dataset.print);
-    const l={empKey:$('#l_emp').value,type:$('#l_type').value,from:$('#l_from').value,to:$('#l_to').value,notes:$('#l_notes').value.trim(),dest:$('#l_dest').value.trim(),contact:$('#l_contact').value.trim(),returned:'',created:TODAY,no:nextLeaveNo()};
+    const l={empKey:$('#l_emp').value,type:$('#l_type').value,from:$('#l_from').value,to:$('#l_to').value,notes:$('#l_notes').value.trim(),dest:$('#l_dest').value.trim(),contact:$('#l_contact').value.trim(),depAir:$('#l_dep').value.trim(),trip:$('#l_trip').value,retAir:$('#l_trip').value==='round'?$('#l_ret').value.trim():'',returned:'',created:TODAY,no:nextLeaveNo()};
     if(!l.empKey)return $('#lerr').textContent=_('اختر العامل.','Choose a worker.');if(!l.from||!l.to)return $('#lerr').textContent=_('حدد تاريخ البداية والنهاية.','Set start and end dates.');if(l.to<l.from)return $('#lerr').textContent=_('تاريخ النهاية قبل البداية.','End date is before start date.');
     try{const lk=newKey('l');await S.db.collection('leaves').doc(lk).set(l);
       const e=JSON.parse(JSON.stringify(byKey(l.empKey)));logPush(e,_('إجازة ','Leave: ')+tr('leaveType',l.type)+' '+dmy(l.from)+' – '+dmy(l.to));

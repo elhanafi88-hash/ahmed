@@ -320,6 +320,10 @@ tfoot td{position:sticky;bottom:0;z-index:2}
 .ph-rot{position:absolute;bottom:8px;inset-inline-start:8px;width:30px;height:30px;border-radius:50%;background:var(--surface);color:var(--accent);display:grid;place-items:center;border:1px solid var(--line);font-size:17px;line-height:1;cursor:pointer;padding:0}
 .ph-rot:hover,.ph-cam:hover{background:var(--accent-soft)}
 .ph-rots{display:flex;gap:8px}.ph-rots .btn{flex:1}
+.rot-st{display:grid;place-items:center;padding:6px 0}.rot-st canvas{width:240px;height:240px;border-radius:50%;border:1px solid var(--line);background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.12)}
+.rot-ctl{display:flex;align-items:center;gap:8px}.rot-ctl input[type=range]{flex:1;min-width:0;accent-color:var(--accent)}.rot-ctl .btn{flex:none}
+.rot-val{display:flex;align-items:center;gap:10px;justify-content:center;font-size:13px;flex-wrap:wrap}.rot-val b{font-size:16px;min-width:52px;text-align:center;direction:ltr}
+.fv-hint input[type=range]{width:160px;accent-color:#7fb8e6}.fv-hint .fv-deg{direction:ltr;min-width:44px;text-align:center;font-weight:700}
 .ph-main{display:flex;flex-direction:column;gap:10px;min-width:0}
 .ph-name{font-size:21px;font-weight:700;direction:ltr;unicode-bidi:isolate;text-align:start;line-height:1.3}
 .ph-sub{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
@@ -1438,6 +1442,26 @@ async function savePhotoBlob(k,blob,note){toast(_('جاري رفع الصورة�
   const e=JSON.parse(JSON.stringify(byKey(k)));const old=e.photo;e.photo=r.id;logPush(e,note||_('تحديث الصورة','Photo updated'));await putEmp(e);
   if(old)S.assets.delete(old).catch(()=>{});toast(_('تم حفظ الصورة','Photo saved'))}
 function rotCanvas(src,dir){const w=src.width||src.naturalWidth,h=src.height||src.naturalHeight;const c=document.createElement('canvas');c.width=h;c.height=w;const x=c.getContext('2d');x.translate(h/2,w/2);x.rotate(dir*Math.PI/2);x.drawImage(src,-w/2,-h/2,w,h);return c}
+function rotAny(src,deg){const w=src.width||src.naturalWidth,h=src.height||src.naturalHeight,r=deg*Math.PI/180,cs=Math.abs(Math.cos(r)),sn=Math.abs(Math.sin(r));
+  const c=document.createElement('canvas');c.width=Math.round(w*cs+h*sn);c.height=Math.round(w*sn+h*cs);const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.translate(c.width/2,c.height/2);x.rotate(r);x.drawImage(src,-w/2,-h/2,w,h);return c}
+function drawRot(c,bm,deg,S){c.width=c.height=S;const x=c.getContext('2d'),w=bm.width,h=bm.height,r=deg*Math.PI/180;const k=S/Math.min(w,h)*(Math.abs(Math.cos(r))+Math.abs(Math.sin(r)));
+  x.fillStyle='#fff';x.fillRect(0,0,S,S);x.save();x.translate(S/2,S/2);x.rotate(r);x.drawImage(bm,-w*k/2,-h*k/2,w*k,h*k);x.restore()}
+const normDeg=d=>{d=((d%360)+360)%360;return d>180?d-360:d};
+async function rotEditor(k){const e=byKey(k);if(!e||!e.photo)return;let bm;
+  try{const r=await fetch(photoSrc(e.photo));if(!r.ok)throw new Error(r.status);bm=await createImageBitmap(await r.blob())}catch(err){toast(_('مقدرتش أفتح الصورة','Could not open the photo'));return}
+  modal('<div class="mbox narrow"><div class="m-h"><h3>'+_('تعديل اتجاه الصورة','Rotate photo')+'</h3><span class="sp"></span><button type="button" class="btn sm" data-act="mclose">✕</button></div><div class="m-b">'+
+   '<div class="rot-st"><canvas id="rt_c"></canvas></div>'+
+   '<div class="rot-ctl"><button type="button" class="btn" id="rt_l" title="'+_('ربع لفة شمال','Quarter turn left')+'">↺ 90°</button><input type="range" id="rt_a" min="-180" max="180" step="1" value="0" aria-label="'+_('الزاوية','Angle')+'"><button type="button" class="btn" id="rt_r" title="'+_('ربع لفة يمين','Quarter turn right')+'">↻ 90°</button></div>'+
+   '<div class="rot-val"><button type="button" class="btn sm" id="rt_m">−1°</button><b id="rt_v">0°</b><button type="button" class="btn sm" id="rt_p">+1°</button><button type="button" class="btn sm" id="rt_0">'+_('رجّعها زي ما كانت','Reset')+'</button></div>'+
+   '<p class="muted" style="margin:0;font-size:12.5px;text-align:center">'+_('حرّك المؤشر عشان تلف الصورة أي درجة من 0 لـ 360','Drag the slider to rotate to any angle, 0–360')+'</p>'+
+   '</div><div class="m-f"><span style="flex:1"></span><button type="button" class="btn" data-act="mclose">'+_('إلغاء','Cancel')+'</button><button type="button" class="btn pri" id="rt_s">'+_('حفظ','Save')+'</button></div></div>');
+  const c=$('#rt_c'),a=$('#rt_a');let deg=0,raf=0;const P=Math.min(480,Math.min(bm.width,bm.height));
+  const upd=()=>{a.value=deg;$('#rt_v').textContent=deg+'°';cancelAnimationFrame(raf);raf=requestAnimationFrame(()=>drawRot(c,bm,deg,P))};
+  const setD=d=>{deg=normDeg(Math.round(d));upd()};upd();
+  a.addEventListener('input',()=>setD(+a.value));$('#rt_l').onclick=()=>setD(deg-90);$('#rt_r').onclick=()=>setD(deg+90);$('#rt_m').onclick=()=>setD(deg-1);$('#rt_p').onclick=()=>setD(deg+1);$('#rt_0').onclick=()=>setD(0);
+  $('#rt_s').onclick=async()=>{if(!deg){closeModal();return}if(!canWrite())return;const bt=$('#rt_s');bt.disabled=true;
+    try{const o=document.createElement('canvas');drawRot(o,bm,deg,Math.min(520,Math.min(bm.width,bm.height)));const blob=await new Promise(res=>o.toBlob(res,'image/jpeg',0.9));
+      await savePhotoBlob(k,blob,_('تعديل اتجاه الصورة','Photo rotated')+' ('+deg+'°)');closeModal()}catch(err){bt.disabled=false;toast(_('تعذر حفظ الصورة: ','Could not save photo: ')+((err&&(err.message||err.code))||''))}}}
 async function rotatePhoto(k,dir){const e=byKey(k);if(!e||!e.photo||!canWrite()||rotatePhoto.busy)return;rotatePhoto.busy=true;
   try{toast(_('جاري لف الصورة…','Rotating photo…'),8000);const r=await fetch(photoSrc(e.photo));if(!r.ok)throw new Error(r.status);const bm=await createImageBitmap(await r.blob());
     const c=rotCanvas(bm,dir);const blob=await new Promise(res=>c.toBlob(res,'image/jpeg',0.9));await savePhotoBlob(k,blob,_('لف الصورة','Photo rotated'))}
@@ -1446,7 +1470,7 @@ async function rotatePhoto(k,dir){const e=byKey(k);if(!e||!e.photo||!canWrite()|
 function photoMenu(k){const e=byKey(k);if(!e)return;if(!S.assets){pickPhoto(k);return}const fs=filesOf(e).filter(f=>/pdf|image/i.test(f.ct||'')||/\.(pdf|jpe?g|png|webp|gif|heic)$/i.test(f.n||''));
   if(!fs.length&&!e.photo){pickPhoto(k);return}
   modal('<div class="mbox narrow"><div class="m-h"><h3>'+(e.photo?_('تغيير الصورة','Change photo'):_('إضافة صورة','Add photo'))+'</h3><span class="sp"></span><button type="button" class="btn sm" data-act="mclose">✕</button></div><div class="m-b">'+
-   (e.photo?'<div><div class="muted" style="font-size:13px;margin-bottom:6px">'+_('الصورة الحالية مقلوبة أو نايمة؟ لفّها:','Current photo sideways? Rotate it:')+'</div><div class="ph-rots"><button type="button" class="btn" data-act="photorot" data-k="'+k+'" data-d="-1">↺ '+_('لف شمال','Rotate left')+'</button><button type="button" class="btn" data-act="photorot" data-k="'+k+'" data-d="1">↻ '+_('لف يمين','Rotate right')+'</button></div></div>':'')+
+   (e.photo?'<div><div class="muted" style="font-size:13px;margin-bottom:6px">'+_('الصورة الحالية مقلوبة أو مايلة؟','Current photo sideways or tilted?')+'</div><div class="ph-rots"><button type="button" class="btn" data-act="photorotx" data-k="'+k+'">🔄 '+_('تعديل اتجاه الصورة (أي زاوية)','Rotate photo (any angle)')+'</button></div></div>':'')+
    '<button type="button" class="btn pri" style="width:100%" id="ph_up">⬆ '+_('رفع صورة من الجهاز','Upload a photo from device')+'</button>'+
    (fs.length?'<p class="muted" style="margin:14px 0 4px;font-size:13px">'+_('أو افتح ملف من ملفات العامل (جواز، هوية…) وحدد الصورة منه:','Or open one of the worker\'s files (passport, ID…) and select the photo from it:')+'</p>'+
    '<div class="ph-files">'+fs.map(f=>'<button type="button" data-f="'+esc(f.id)+'"><span class="ic">'+(/pdf/i.test(f.ct||f.n||'')?'📄':'🖼')+'</span><span style="min-width:0"><b>'+esc(ftLabel(f.t))+'</b><br><span class="muted" style="font-size:12px;overflow-wrap:anywhere">'+esc(f.n||'')+'</span></span></button>').join('')+'</div>':'')+'</div></div>');
@@ -1455,13 +1479,15 @@ function photoMenu(k){const e=byKey(k);if(!e)return;if(!S.assets){pickPhoto(k);r
 function fileOwner(id){for(const e of S.emps||[])if((e.files||[]).some(f=>f.id===id))return e._k;return null}
 function fvPick(b,k,on){const btn=$('#fv_ph');if(!btn)return;if(!k||!S.assets||!byKey(k)){btn.remove();return}btn.hidden=false;
   const bar=document.createElement('div');bar.className='fv-hint';bar.hidden=true;
-  bar.innerHTML='<span id="fv_ht">'+_('اعمل اسكرول للصورة، وبعدين اسحب بالماوس عليها عشان تحددها','Scroll to the photo, then drag over it to select')+'</span><button class="btn" id="fv_rl" title="'+_('لف الصفحات شمال','Rotate pages left')+'">↺</button><button class="btn" id="fv_rr" title="'+_('لف الصفحات يمين','Rotate pages right')+'">↻</button><img class="fv-pv" id="fv_pv" hidden alt=""><button class="btn pri" id="fv_ok" disabled>'+_('حفظ كصورة البروفايل','Save as profile photo')+'</button><button class="btn" id="fv_cn">'+_('إلغاء','Cancel')+'</button>';
+  bar.innerHTML='<span id="fv_ht">'+_('اعمل اسكرول للصورة، وبعدين اسحب بالماوس عليها عشان تحددها','Scroll to the photo, then drag over it to select')+'</span><button class="btn" id="fv_rl" title="'+_('ربع لفة شمال','Quarter turn left')+'">↺</button><input type="range" id="fv_ra" min="-180" max="180" step="1" value="0" title="'+_('لف الصفحات أي درجة','Rotate pages to any angle')+'"><span class="fv-deg" id="fv_rv">0°</span><button class="btn" id="fv_rr" title="'+_('ربع لفة يمين','Quarter turn right')+'">↻</button><img class="fv-pv" id="fv_pv" hidden alt=""><button class="btn pri" id="fv_ok" disabled>'+_('حفظ كصورة البروفايل','Save as profile photo')+'</button><button class="btn" id="fv_cn">'+_('إلغاء','Cancel')+'</button>';
   b.parentNode.appendChild(bar);let mode=false,pw=null,box=null,g=null,drag=null;
   const clear=()=>{if(box)box.remove();box=pw=g=null;$('#fv_ok').disabled=true;$('#fv_pv').hidden=true};
   const set=m=>{mode=m;b.classList.toggle('picking',m);bar.hidden=!m;btn.classList.toggle('pri',m);if(!m)clear()};
   btn.onclick=()=>set(!mode);$('#fv_cn').onclick=()=>set(false);
-  const rot=dir=>{clear();b.querySelectorAll('.fv-pw').forEach(w=>{const el=w.querySelector('canvas,img');if(!el||(el.tagName==='IMG'&&!el.naturalWidth))return;const c=rotCanvas(el,dir);c.className='fv-pg';el.replaceWith(c)})};
-  $('#fv_rl').onclick=()=>rot(-1);$('#fv_rr').onclick=()=>rot(1);
+  let ang=0,raf=0;const rot=d=>{ang=normDeg(Math.round(d));$('#fv_ra').value=ang;$('#fv_rv').textContent=ang+'°';clear();cancelAnimationFrame(raf);raf=requestAnimationFrame(()=>{
+    b.querySelectorAll('.fv-pw').forEach(w=>{const el=w.querySelector('canvas,img');if(!el)return;if(!w._src){if(el.tagName==='IMG'&&!el.naturalWidth)return;w._src=el}
+      const c=ang?rotAny(w._src,ang):w._src;if(c!==el){if(c.tagName==='CANVAS')c.className='fv-pg';el.replaceWith(c)}})})};
+  $('#fv_rl').onclick=()=>rot(ang-90);$('#fv_rr').onclick=()=>rot(ang+90);$('#fv_ra').addEventListener('input',ev=>rot(+ev.target.value));
   const srcOf=w=>{const el=w.querySelector('canvas,img');if(!el)return null;const nw=el.tagName==='CANVAS'?el.width:el.naturalWidth;return {el,f:nw/el.getBoundingClientRect().width}};
   const crop=(size)=>{const s=srcOf(pw);if(!s||!g)return null;const n=g.s*s.f,o=Math.max(1,Math.round(Math.min(size,n)));const c=document.createElement('canvas');c.width=c.height=o;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,o,o);x.drawImage(s.el,g.x*s.f,g.y*s.f,n,n,0,0,o,o);return c};
   const draw=()=>{box.style.left=g.x+'px';box.style.top=g.y+'px';box.style.width=box.style.height=g.s+'px'};
@@ -2032,7 +2058,7 @@ function renderProfile(v){const k=location.hash.slice(3),e=byKey(k);
   else body=panel(_('السجل','History'),'','<ul class="log">'+[...(e.log||[])].reverse().map(x=>'<li><span>'+fmt(x.d)+'</span><span>'+esc(x.t)+'</span></li>').join('')+'</ul><div class="addlog"><input type="text" id="lognote" placeholder="'+_('أضف ملاحظة للسجل (مثلاً: سلّم الجواز للمندوب)','Add a note (e.g. passport handed to PRO)')+'"><button class="btn" data-act="addlog" data-k="'+k+'">'+_('إضافة','Add')+'</button></div>');
   v.innerHTML='<div class="head"><a class="btn sm" href="#workers">'+(LANG==='en'?'← ':'→ ')+_('العمال','Workers')+'</a><h2>'+_('ملف العامل','Worker profile')+'</h2><span class="sp"></span>'+'<input type="month" id="ptm" value="'+TODAY.slice(0,7)+'" title="'+_('الشهر','Month')+'" style="width:auto"><button class="btn" data-act="ptsheet" data-k="'+k+'">'+_('كشف الحضور','Attendance sheet')+'</button>'+(S.assets&&e.photo?'<button class="btn danger" data-act="delphoto" data-k="'+k+'">🗑 '+_('حذف الصورة','Delete photo')+'</button>':'')+'<button class="btn" data-act="repone" data-k="'+k+'">'+_('تقرير للطباعة','Print report')+'</button><button class="btn" data-act="termform" data-k="'+k+'">'+_('كليرانس','Clearance')+'</button><button class="btn" data-act="termletter" data-k="'+k+'">'+_('إنهاء خدمة','Termination')+'</button><button class="btn pri" data-act="edit" data-k="'+k+'">'+_('تعديل البيانات','Edit details')+'</button><button class="btn danger" data-act="askdel">'+_('حذف','Delete')+'</button></div>'+
   (S.confirmDel?'<div class="confirm">'+_('حذف '+esc(e.name)+' وكل إجازاته نهائيًا؟','Delete '+esc(e.name)+' and all their leaves permanently?')+'<span style="flex:1"></span><button class="btn sm danger" data-act="del" data-k="'+k+'">'+_('نعم، احذف','Yes, delete')+'</button><button class="btn sm" data-act="canceldel">'+_('إلغاء','Cancel')+'</button></div>':'')+
-  '<section class="panel phero"><div class="ph-av"'+(S.assets?' data-act="photo" data-k="'+k+'" title="'+_('تغيير الصورة','Change photo')+'"':'')+'>'+avatar(e,'xl')+(S.assets?'<span class="ph-cam">'+svg('camera')+'</span>'+(e.photo?'<button type="button" class="ph-rot" data-act="photorot" data-k="'+k+'" data-d="1" title="'+_('لف الصورة','Rotate photo')+'" aria-label="'+_('لف الصورة','Rotate photo')+'">↻</button>':''):'')+'</div>'+
+  '<section class="panel phero"><div class="ph-av"'+(S.assets?' data-act="photo" data-k="'+k+'" title="'+_('تغيير الصورة','Change photo')+'"':'')+'>'+avatar(e,'xl')+(S.assets?'<span class="ph-cam">'+svg('camera')+'</span>'+(e.photo?'<button type="button" class="ph-rot" data-act="photorotx" data-k="'+k+'" title="'+_('تعديل اتجاه الصورة','Rotate photo')+'" aria-label="'+_('تعديل اتجاه الصورة','Rotate photo')+'">↻</button>':''):'')+'</div>'+
    '<div class="ph-main"><div class="ph-name">'+esc(e.name)+'</div><div class="ph-sub">'+idHtml(e)+'<span class="muted">·</span><b>'+t(e.designation)+'</b></div>'+
    '<div class="ph-chips">'+chip(_('القسم','Dept'),tr('department',e.department)==='—'?'':tr('department',e.department))+chip(_('البسبور','Passport'),e.passSlot?'#'+ppNo(e)+(e.passBox?' · '+e.passBox:'')+(e.passState==='out'?' · '+_('مع العامل','with worker'):''):'')+chip(_('الدوام','Shift'),'⁦7 AM – '+hm12(shiftEndOf(e._k))+'⁩')+chip(_('السكن','Room'),e.room?_('غرفة ','Room ')+e.room:'')+chip(_('السكشن','Section'),e.section)+chip(_('الشركة','Company'),e.company)+chip(_('الجنسية','Nationality'),e.nationality?tr('nationality',e.nationality):'')+chip(_('الدرجة','Grade'),e.grade)+'</div>'+
    '<div class="quick" style="max-width:520px"><label>'+_('حالة العمل','Work status')+'<select data-chg="st" data-k="'+k+'">'+opts(STATUSES,e.status||'','status',_('غير محددة','Not set'))+'</select></label><label>'+_('حالة التأشيرة','Visa status')+'<select data-chg="vs" data-k="'+k+'">'+opts(listOf('visaStatuses','visaStatus'),e.visaStatus||'','visaStatus',_('غير محددة','Not set'))+'</select></label></div></div>'+
@@ -2446,6 +2472,7 @@ const ACT={
   repalerts:()=>showReport(repAlerts(),'Documents_Report_'+TODAY+'.html',_('تقرير المستندات','Documents report'),false),
   photo:t=>photoMenu(t.dataset.k),
   photorot:t=>rotatePhoto(t.dataset.k,+t.dataset.d||1),
+  photorotx:t=>{closeModal();rotEditor(t.dataset.k)},
   delphoto:async t=>{if(!canWrite())return;const e0=byKey(t.dataset.k);if(!e0||!e0.photo)return;
     if(t.dataset.sure!=='1'){t.dataset.sure='1';t.textContent=_('تأكيد حذف الصورة','Confirm delete photo');return}
     try{const e=JSON.parse(JSON.stringify(e0));const old=e.photo;delete e.photo;logPush(e,_('حذف الصورة الشخصية','Photo removed'));await putEmp(e);

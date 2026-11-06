@@ -257,6 +257,10 @@ legend{font-weight:600;font-size:13px;color:var(--teal);padding:0;margin-bottom:
 .wk-t{cursor:pointer;min-width:0}
 .wk-t .nm{min-width:0;font-size:12.5px}
 .wk .mv{grid-column:2;font-size:12px;padding:3px 8px;color:var(--muted)}
+.lead-row{display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--line);background:var(--accent-soft);font-size:12px}
+.lead-row b{color:var(--accent);white-space:nowrap}.lead-row select{flex:1;min-width:0;font-size:12px;padding:3px 8px}
+.wk.lead{background:var(--accent-soft);box-shadow:inset 3px 0 0 var(--accent)}
+.lead-tag{display:inline-block;font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:999px;background:var(--accent);color:var(--accent-ink);margin-inline-start:6px;vertical-align:1px}
 .fgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:14px}
 .fc{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden;display:flex;flex-direction:column}
 .fc-ph{cursor:pointer;border-bottom:1px solid var(--line)}
@@ -1432,13 +1436,23 @@ function renderDist(v){const d=S.dist;
   (d.by==='section'&&!(S.lists.sections||[]).length?'<span class="muted">'+_('أضف أسماء السكاشن من الإعدادات أولاً.','Add section names in Settings first.')+'</span>':'')+'</div>'+
   '<div class="board" id="dboard"></div>';fillDist()}
 function distGroups(){const by=S.dist.by;if(by==='designation'){const out=[];for(const g of jobGroups(active()))for(const e of g[2]){const v=e.designation||'';if(v&&!out.includes(v))out.push(v)}return out}if(by==='department')return listOf('departments','department');const base=[...(S.lists.sections||[])];for(const e of S.emps)if(e.section&&!base.includes(e.section))base.push(e.section);return base}
+function leadsOf(by){return ((S.lists.leads||{})[by])||{}}
+function leadOf(by,g){const k=leadsOf(by)[g];const e=k&&byKey(k);return e&&!INACTIVE.has(e.status)?e:null}
+async function setLead(by,g,k){if(!canWrite())return;const Ls=JSON.parse(JSON.stringify(S.lists));Ls.leads=Ls.leads||{};const m=Ls.leads[by]||{};if(k)m[g]=k;else delete m[g];Ls.leads[by]=m;try{await S.db.doc('config/lists').set(Ls);S.lists=Ls;const e=k&&byKey(k);toast(e?e.name+' ← '+_('فورمن ','Foreman of ')+g:_('اتشال الفورمن','Foreman removed'));fillDist()}catch(err){toast(ERRSAVE())}}
 function fillDist(){const b=$('#dboard');if(!b)return;const by=S.dist.by,q=S.dist.q.trim().toLowerCase();
   const list=active().filter(e=>!q||[e.name,e.empId,e.designation].join(' ').toLowerCase().includes(q)).sort((a,b)=>a.name.localeCompare(b.name));
   const groups=distGroups(),map=by==='department'?'department':'';
   $('#dcount').textContent=list.length+' '+_('عامل','workers');
   b.innerHTML=[...groups,''].map(g=>{const ws=list.filter(e=>(e[by]||'')===g);if(g===''&&!ws.length)return '';
-    return '<section class="col'+(g?'':' none')+'"><div class="col-h"><h3>'+esc(g?(map?tr(map,g):g):_('غير موزع','Unassigned'))+'</h3><span class="sp"></span><span class="cb">'+ws.length+'</span></div><div class="col-b">'+
-     (ws.length?ws.map(e=>'<div class="wk">'+avatar(e)+'<div class="wk-t" data-act="open" data-k="'+e._k+'"><div class="nm">'+esc(e.name)+'</div><div class="sub">'+(e.empId?'<span class="id">'+esc(e.empId)+'</span> · ':'')+esc(e.designation||'')+(by==='section'&&e.department?' · '+esc(tr('department',e.department)):'')+'</div></div>'+
+    const canLead=g&&by!=='designation',ld=canLead?leadOf(by,g):null,lk=ld?ld._k:'';
+    if(ld)ws.sort((a,b)=>(b._k===lk)-(a._k===lk));
+    const leadOn=e=>by==='designation'?[]:Object.entries(leadsOf(by)).filter(([gg,kk])=>kk===e._k&&groups.includes(gg)).map(([gg])=>gg);
+    const leadSel=canLead?'<div class="lead-row"><b>★ '+_('الفورمن','Foreman')+'</b><select data-chg="lead" data-g="'+esc(g)+'" aria-label="'+_('اختار الفورمن','Choose foreman')+'"><option value="">'+_('— بدون —','— None —')+'</option>'+
+      active().slice().sort((a,b)=>a.name.localeCompare(b.name)).map(e=>'<option value="'+e._k+'"'+(e._k===lk?' selected':'')+'>'+esc(e.name)+(e.empId?' ('+esc(e.empId)+')':'')+((e[by]||'')!==g?' · '+esc(e[by]?(map?tr(map,e[by]):e[by]):_('غير موزع','Unassigned')):'')+'</option>').join('')+'</select></div>':'';
+    return '<section class="col'+(g?'':' none')+'"><div class="col-h"><h3>'+esc(g?(map?tr(map,g):g):_('غير موزع','Unassigned'))+'</h3><span class="sp"></span><span class="cb">'+ws.length+'</span></div>'+leadSel+
+     (ld&&(ld[by]||'')!==g?'<div class="wk lead">'+avatar(ld)+'<div class="wk-t" data-act="open" data-k="'+ld._k+'"><div class="nm">'+esc(ld.name)+'<span class="lead-tag">★ '+_('فورمن','Foreman')+'</span></div><div class="sub">'+(ld.empId?'<span class="id">'+esc(ld.empId)+'</span> · ':'')+esc(ld.designation||'')+' · '+_('من ','from ')+esc(ld[by]?(map?tr(map,ld[by]):ld[by]):_('غير موزع','Unassigned'))+'</div></div></div>':'')+
+     '<div class="col-b">'+
+     (ws.length?ws.map(e=>'<div class="wk'+(e._k===lk?' lead':'')+'">'+avatar(e)+'<div class="wk-t" data-act="open" data-k="'+e._k+'"><div class="nm">'+esc(e.name)+leadOn(e).map(gg=>'<span class="lead-tag">★ '+(gg===g?_('فورمن','Foreman'):_('فورمن ','Foreman · ')+esc(map?tr(map,gg):gg))+'</span>').join('')+'</div><div class="sub">'+(e.empId?'<span class="id">'+esc(e.empId)+'</span> · ':'')+esc(e.designation||'')+(by==='section'&&e.department?' · '+esc(tr('department',e.department)):'')+'</div></div>'+
       '<select class="mv" data-chg="grp" data-k="'+e._k+'" aria-label="'+_('نقل إلى','Move to')+'" title="'+_('نقل إلى','Move to')+'">'+opts(groups,e[by]||'',map,_('غير موزع','Unassigned'))+'</select></div>').join(''):'<div class="empty" style="padding:14px">'+_('لا يوجد عمال','No workers')+'</div>')+'</div></section>'}).join('')}
 
 /* ---------- workforce ---------- */
@@ -1588,7 +1602,7 @@ async function showCert(b){const e=byKey(b.empKey)||{name:b.name};await preloadP
 function repDist(){const by=S.dist.by,groups=distGroups(),map=by==='department'?'department':'';const list=active().sort((a,b)=>a.name.localeCompare(b.name));
   return rShell(rHead(_('توزيع العمال','Workforce Distribution'),by==='designation'?_('حسب الوظيفة','By job title'):by==='department'?_('حسب القسم','By department'):_('حسب السكشن','By section'))+
    '<div class="boxes">'+[...groups,''].map(g=>{const n=list.filter(e=>(e[by]||'')===g).length;return n?'<div><b>'+n+'</b><span>'+esc(g?(map?tr(map,g):g):_('غير موزع','Unassigned'))+'</span></div>':''}).join('')+'</div>'+
-   [...groups,''].map(g=>{const ws=list.filter(e=>(e[by]||'')===g);if(!ws.length)return '';return '<h2>'+esc(g?(map?tr(map,g):g):_('غير موزع','Unassigned'))+' <span style="color:#5a6878;font-weight:400">('+ws.length+')</span></h2><table><thead><tr><th>#</th><th>'+_('رقم الموظف','Emp. ID')+'</th><th>'+_('الاسم','Name')+'</th><th>'+_('المهنة','Designation')+'</th><th>'+(by==='designation'?_('الصفة','Type'):by==='department'?_('السكشن','Section'):_('القسم','Department'))+'</th><th>'+_('الحالة','Status')+'</th></tr></thead><tbody>'+
+   [...groups,''].map(g=>{const ws=list.filter(e=>(e[by]||'')===g);if(!ws.length)return '';const ld=g&&by!=='designation'?leadOf(by,g):null;return '<h2>'+esc(g?(map?tr(map,g):g):_('غير موزع','Unassigned'))+' <span style="color:#5a6878;font-weight:400">('+ws.length+')</span></h2>'+(ld?'<p style="margin:-4px 0 8px"><b>'+_('الفورمن: ','Foreman: ')+'</b><span class="en">'+esc(ld.name)+'</span>'+(ld.empId?' · '+esc(ld.empId):'')+'</p>':'')+'<table><thead><tr><th>#</th><th>'+_('رقم الموظف','Emp. ID')+'</th><th>'+_('الاسم','Name')+'</th><th>'+_('المهنة','Designation')+'</th><th>'+(by==='designation'?_('الصفة','Type'):by==='department'?_('السكشن','Section'):_('القسم','Department'))+'</th><th>'+_('الحالة','Status')+'</th></tr></thead><tbody>'+
     ws.map((e,i)=>'<tr><td>'+(i+1)+'</td><td>'+rl(e.empId)+'</td><td class="en">'+esc(e.name)+'</td><td class="en">'+rt(e.designation)+'</td><td>'+(by==='designation'?kindLabel(rcat(e)):rt(by==='department'?e.section:tr('department',e.department)))+'</td><td>'+esc(tr('status',e.status||''))+'</td></tr>').join('')+'</tbody></table>'}).join(''),false)}
 const RCATS=[['mgmt',['الإدارة والمشرفين','Management & Supervisors'],/engineer|coordinator|manager|supervisor|foreman|forman/i],['fab',['التصنيع','Fabricators'],/^(?!.*alumin).*(fabricat|fitter)/i],['weld',['اللحامين','Welders'],/weld/i],['alu',['الألمنيوم','Aluminium'],/alumin/i],['op',['مشغلي الماكينات','Machine Operators'],/operator/i],['paint',['الدهانين','Painters'],/paint/i],['help',['المساعدين','Helpers'],/helper/i],['drv',['السواقين','Drivers'],/driver/i]];
 const MGMT_ORDER=[/engineer/i,/coordinator|manager/i,/factory foreman/i,/foreman|forman|supervisor/i];
@@ -2482,6 +2496,7 @@ document.addEventListener('change',ev=>{const t=ev.target;
   else if(t.dataset.chg==='vs')quickSet(t.dataset.k,'visaStatus',t.value);
   else if(t.dataset.chg==='st'){if(t.value==='On Site')openSite(t.dataset.k);else if(t.value==='Working'&&(byKey(t.dataset.k)||{}).status==='On Site')backFromSite(t.dataset.k);else quickSet(t.dataset.k,'status',t.value)}
   else if(t.dataset.chg==='grp')quickSet(t.dataset.k,S.dist.by,t.value);
+  else if(t.dataset.chg==='lead')setLead(S.dist.by,t.dataset.g,t.value);
   else if(t.dataset.chg==='room')quickSet(t.dataset.k,'room',t.value);
   else if(t.dataset.chg==='roomcap'){const R=campRooms();const r=R.find(x=>x.no===t.dataset.r);if(r){r.cap=Math.max(0,parseInt(t.value,10)||0);saveRooms(R).then(ok=>{if(ok){toast(_('تم حفظ السعة','Capacity saved'));render()}})}}
   else if(t.dataset.chg==='regpos'){const v2=parseInt(t.value,10);if(v2>0)regMoveTo(t.dataset.k,v2-1)}

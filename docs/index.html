@@ -374,7 +374,19 @@ tfoot td{position:sticky;bottom:0;z-index:2}
 }
 @media (max-width:900px) and (max-height:900px){.pinbar{position:static;box-shadow:none}}
 @media (max-width:560px){.kpi b{font-size:22px}.quick{grid-template-columns:1fr}}
-.fv{position:fixed;inset:0;z-index:9999;background:rgba(15,25,38,.92);display:flex;flex-direction:column}.fv-bar{display:flex;align-items:center;gap:8px;padding:10px 14px;background:#13283C;color:#fff}.fv-bar .sp{flex:1}.fv-bar .btn{color:#13283C;background:#fff}.fv-bar .btn.pri{color:#fff;background:#2f6fa3}.fv-nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:50vw}.fv-body{flex:1;overflow:auto;padding:16px;display:flex;flex-direction:column;align-items:center;gap:14px}.fv-pg,.fv-img{max-width:min(100%,1000px);height:auto;background:#fff;box-shadow:0 4px 18px rgba(0,0,0,.4)}.fv-msg{color:#fff;margin-top:20vh;font-size:15px}
+.fv{position:fixed;inset:0;z-index:9999;background:rgba(15,25,38,.92);display:flex;flex-direction:column}.fv-bar{display:flex;align-items:center;gap:8px;padding:10px 14px;background:#13283C;color:#fff}.fv-bar .sp{flex:1}.fv-bar .btn{color:#13283C;background:#fff}.fv-bar .btn.pri{color:#fff;background:#2f6fa3}.fv-nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:50vw}.fv-body{flex:1;overflow:auto;padding:16px;display:flex;flex-direction:column;align-items:center;gap:14px}.fv-pg,.fv-img{max-width:min(100%,1000px);height:auto;background:#fff;box-shadow:0 4px 18px rgba(0,0,0,.4)}
+.fv-pw{position:relative;display:inline-block;line-height:0;max-width:min(100%,1000px);flex:none}.fv-pw>.fv-pg,.fv-pw>.fv-img{max-width:100%;display:block}
+.fv-body.picking .fv-pw{cursor:crosshair;touch-action:none;user-select:none}
+.fv-sel{position:absolute;border:2px solid #fff;border-radius:50%;box-shadow:0 0 0 9999px rgba(10,20,30,.55);cursor:move;pointer-events:none}
+.fv-pw:has(.fv-sel){z-index:1}
+.fv-hint{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:10000;display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:center;background:#13283C;color:#fff;padding:10px 14px;border-radius:12px;box-shadow:0 8px 26px rgba(0,0,0,.45);font-size:13.5px;max-width:calc(100vw - 24px)}
+.fv-hint[hidden]{display:none}
+.fv-pv{width:44px;height:44px;border-radius:50%;background:#fff;object-fit:cover;flex:none}
+.ph-files{display:flex;flex-direction:column;gap:6px;margin-top:6px}
+.ph-files button{display:flex;gap:10px;align-items:center;text-align:start;width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:9px;background:var(--surface);color:inherit;cursor:pointer;font:inherit}
+.ph-files button:hover{border-color:var(--accent);background:var(--accent-soft)}
+.ph-files .ic{font-size:20px}
+.fv-msg{color:#fff;margin-top:20vh;font-size:15px}
 
 body.kiosk-on .side{display:none!important}body.kiosk-on #app{display:block}body.kiosk-on{margin:0;background:#0f2234}body.kiosk-on #view{padding:0!important;margin:0!important;max-width:none!important;width:100%}
 .kiosk{direction:ltr;min-height:100vh;background:linear-gradient(160deg,#0f2234,#1d3a56);color:#fff;display:flex;flex-direction:column;font-size:18px}
@@ -1417,10 +1429,46 @@ async function shrink(file){let src,w,h;try{src=await createImageBitmap(file);w=
 function pickPhoto(k){if(!S.assets){toast(_('رفع الصور غير متاح في هذا العرض','Photo upload is not available in this view'));return}
   const inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.hidden=true;document.body.appendChild(inp);
   inp.addEventListener('change',async()=>{const f=inp.files[0];inp.remove();if(!f||!canWrite())return;
-    try{toast(_('جاري رفع الصورة…','Uploading photo…'),8000);const blob=await shrink(f);const r=await S.assets.upload(blob,{type:'image/jpeg'});S.purl[r.id]=r.url;
-      const e=JSON.parse(JSON.stringify(byKey(k)));const old=e.photo;e.photo=r.id;logPush(e,_('تحديث الصورة','Photo updated'));await putEmp(e);
-      if(old)S.assets.delete(old).catch(()=>{});toast(_('تم حفظ الصورة','Photo saved'))}catch(err){toast(_('تعذر رفع الصورة: ','Photo upload failed: ')+((err&&(err.message||err.code))||''))}});
+    try{await savePhotoBlob(k,await shrink(f))}catch(err){toast(_('تعذر رفع الصورة: ','Photo upload failed: ')+((err&&(err.message||err.code))||''))}});
   inp.click()}
+async function savePhotoBlob(k,blob,note){toast(_('جاري رفع الصورة…','Uploading photo…'),8000);const r=await S.assets.upload(blob,{type:'image/jpeg'});S.purl[r.id]=r.url;
+  const e=JSON.parse(JSON.stringify(byKey(k)));const old=e.photo;e.photo=r.id;logPush(e,note||_('تحديث الصورة','Photo updated'));await putEmp(e);
+  if(old)S.assets.delete(old).catch(()=>{});toast(_('تم حفظ الصورة','Photo saved'))}
+/* choose photo: upload new, or crop it from one of the worker's files */
+function photoMenu(k){const e=byKey(k);if(!e)return;if(!S.assets){pickPhoto(k);return}const fs=filesOf(e).filter(f=>/pdf|image/i.test(f.ct||'')||/\.(pdf|jpe?g|png|webp|gif|heic)$/i.test(f.n||''));
+  if(!fs.length){pickPhoto(k);return}
+  modal('<div class="mbox narrow"><div class="m-h"><h3>'+(e.photo?_('تغيير الصورة','Change photo'):_('إضافة صورة','Add photo'))+'</h3><span class="sp"></span><button type="button" class="btn sm" data-act="mclose">✕</button></div><div class="m-b">'+
+   '<button type="button" class="btn pri" style="width:100%" id="ph_up">⬆ '+_('رفع صورة من الجهاز','Upload a photo from device')+'</button>'+
+   '<p class="muted" style="margin:14px 0 4px;font-size:13px">'+_('أو افتح ملف من ملفات العامل (جواز، هوية…) وحدد الصورة منه:','Or open one of the worker\'s files (passport, ID…) and select the photo from it:')+'</p>'+
+   '<div class="ph-files">'+fs.map(f=>'<button type="button" data-f="'+esc(f.id)+'"><span class="ic">'+(/pdf/i.test(f.ct||f.n||'')?'📄':'🖼')+'</span><span style="min-width:0"><b>'+esc(ftLabel(f.t))+'</b><br><span class="muted" style="font-size:12px;overflow-wrap:anywhere">'+esc(f.n||'')+'</span></span></button>').join('')+'</div></div></div>');
+  $('#ph_up').onclick=()=>{closeModal();pickPhoto(k)};
+  document.querySelectorAll('.ph-files button').forEach(bt=>bt.onclick=()=>{const f=fs.find(x=>x.id===bt.dataset.f);closeModal();viewFile(f.id,f.n,{pick:k})})}
+function fileOwner(id){for(const e of S.emps||[])if((e.files||[]).some(f=>f.id===id))return e._k;return null}
+function fvPick(b,k,on){const btn=$('#fv_ph');if(!btn)return;if(!k||!S.assets||!byKey(k)){btn.remove();return}btn.hidden=false;
+  const bar=document.createElement('div');bar.className='fv-hint';bar.hidden=true;
+  bar.innerHTML='<span id="fv_ht">'+_('اعمل اسكرول للصورة، وبعدين اسحب بالماوس عليها عشان تحددها','Scroll to the photo, then drag over it to select')+'</span><img class="fv-pv" id="fv_pv" hidden alt=""><button class="btn pri" id="fv_ok" disabled>'+_('حفظ كصورة البروفايل','Save as profile photo')+'</button><button class="btn" id="fv_cn">'+_('إلغاء','Cancel')+'</button>';
+  b.parentNode.appendChild(bar);let mode=false,pw=null,box=null,g=null,drag=null;
+  const clear=()=>{if(box)box.remove();box=pw=g=null;$('#fv_ok').disabled=true;$('#fv_pv').hidden=true};
+  const set=m=>{mode=m;b.classList.toggle('picking',m);bar.hidden=!m;btn.classList.toggle('pri',m);if(!m)clear()};
+  btn.onclick=()=>set(!mode);$('#fv_cn').onclick=()=>set(false);
+  const srcOf=w=>{const el=w.querySelector('canvas,img');if(!el)return null;const nw=el.tagName==='CANVAS'?el.width:el.naturalWidth;return {el,f:nw/el.getBoundingClientRect().width}};
+  const crop=(size)=>{const s=srcOf(pw);if(!s||!g)return null;const n=g.s*s.f,o=Math.max(1,Math.round(Math.min(size,n)));const c=document.createElement('canvas');c.width=c.height=o;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,o,o);x.drawImage(s.el,g.x*s.f,g.y*s.f,n,n,0,0,o,o);return c};
+  const draw=()=>{box.style.left=g.x+'px';box.style.top=g.y+'px';box.style.width=box.style.height=g.s+'px'};
+  const pos=(ev,w)=>{const r=w.getBoundingClientRect();return {x:Math.max(0,Math.min(r.width,ev.clientX-r.left)),y:Math.max(0,Math.min(r.height,ev.clientY-r.top)),W:r.width,H:r.height}};
+  b.addEventListener('pointerdown',ev=>{if(!mode)return;const w=ev.target.closest('.fv-pw');if(!w)return;ev.preventDefault();const p=pos(ev,w);
+    if(g&&pw===w&&p.x>=g.x&&p.x<=g.x+g.s&&p.y>=g.y&&p.y<=g.y+g.s)drag={t:'mv',ox:p.x-g.x,oy:p.y-g.y};
+    else{clear();pw=w;box=document.createElement('div');box.className='fv-sel';w.appendChild(box);g={x:p.x,y:p.y,s:0};draw();drag={t:'new',x0:p.x,y0:p.y}}
+    try{b.setPointerCapture(ev.pointerId)}catch(e){}});
+  b.addEventListener('pointermove',ev=>{if(!drag||!pw)return;const p=pos(ev,pw);
+    if(drag.t==='mv'){g.x=Math.max(0,Math.min(p.W-g.s,p.x-drag.ox));g.y=Math.max(0,Math.min(p.H-g.s,p.y-drag.oy))}
+    else{const dx=p.x-drag.x0,dy=p.y-drag.y0,sx=dx<0?-1:1,sy=dy<0?-1:1;let n=Math.max(Math.abs(dx),Math.abs(dy));n=Math.min(n,sx>0?p.W-drag.x0:drag.x0,sy>0?p.H-drag.y0:drag.y0);g={x:sx>0?drag.x0:drag.x0-n,y:sy>0?drag.y0:drag.y0-n,s:n}}
+    draw()});
+  const end=()=>{if(!drag)return;drag=null;if(!g||g.s<12){clear();return}const c=crop(120);if(c){const pv=$('#fv_pv');pv.src=c.toDataURL('image/jpeg',.85);pv.hidden=false}$('#fv_ok').disabled=false};
+  b.addEventListener('pointerup',end);b.addEventListener('pointercancel',end);
+  $('#fv_ok').onclick=async()=>{const c=crop(520);if(!c||!canWrite())return;$('#fv_ok').disabled=true;
+    try{const blob=await new Promise(r=>c.toBlob(r,'image/jpeg',0.88));await savePhotoBlob(k,blob,_('تحديث الصورة من ملف','Photo updated from a file'));$('#fv-root').innerHTML=''}
+    catch(err){$('#fv_ok').disabled=false;toast(_('تعذر رفع الصورة: ','Photo upload failed: ')+((err&&(err.message||err.code))||''))}};
+  if(on)set(true)}
 async function photoData(id){if(!id)return '';if(S.pdata[id])return S.pdata[id];try{const r=await fetch(photoSrc(id));if(!r.ok)return '';const b=await r.blob();const d=await new Promise(res=>{const fr=new FileReader();fr.onload=()=>res(fr.result);fr.readAsDataURL(b)});S.pdata[id]=d;return d}catch(e){return ''}}
 async function preloadPhotos(list){const ids=[...new Set(list.map(e=>e.photo).filter(Boolean))].filter(id=>!S.pdata[id]);if(ids.length)toast(_('جاري تجهيز الصور…','Preparing photos…'),6000);await Promise.all(ids.map(photoData))}
 function rAv(e,cls){const d=e.photo&&S.pdata[e.photo];return '<div class="rav '+(cls||'')+'">'+(d?'<img src="'+d+'" alt="">':'<span>'+esc(initials(e.name))+'</span>')+'</div>'}
@@ -1852,16 +1900,16 @@ let PDFJS=null;
 /* in-app file viewer (new tabs can't open the stored files) */
 function fileIdFromHref(h){if(!h)return null;const m=h.match(/\/_blob\/([0-9a-f]{16,})/i);if(m)return m[1];for(const [id,u] of Object.entries(S.purl||{}))if(u===h)return id;return null}
 function fileMeta(id){for(const e of S.emps||[])for(const f of (e.files||[]))if(f.id===id)return f;return null}
-async function viewFile(id,name){const meta=fileMeta(id)||{};name=name||meta.n||'file';
-  $('#fv-root').innerHTML='<div class="fv"><div class="fv-bar"><b class="fv-nm">'+esc(name)+'</b><span class="sp"></span><button class="btn" id="fv_dl">'+_('تحميل','Download')+'</button><button class="btn" id="fv_pr">'+_('طباعة','Print')+'</button><button class="btn pri" id="fv_x">'+_('إغلاق','Close')+' ✕</button></div><div class="fv-body" id="fv_b"><div class="fv-msg">'+_('جاري فتح الملف…','Opening file…')+'</div></div></div>';
+async function viewFile(id,name,o){o=o||{};const meta=fileMeta(id)||{};name=name||meta.n||'file';const owner=o.pick||fileOwner(id);
+  $('#fv-root').innerHTML='<div class="fv"><div class="fv-bar"><b class="fv-nm">'+esc(name)+'</b><span class="sp"></span><button class="btn" id="fv_ph" hidden>📷 '+_('حدد صورة البروفايل','Pick profile photo')+'</button><button class="btn" id="fv_dl">'+_('تحميل','Download')+'</button><button class="btn" id="fv_pr">'+_('طباعة','Print')+'</button><button class="btn pri" id="fv_x">'+_('إغلاق','Close')+' ✕</button></div><div class="fv-body" id="fv_b"><div class="fv-msg">'+_('جاري فتح الملف…','Opening file…')+'</div></div></div>';
   const close=()=>{$('#fv-root').innerHTML='';document.removeEventListener('keydown',esc1)};const esc1=ev=>{if(ev.key==='Escape')close()};document.addEventListener('keydown',esc1);$('#fv_x').onclick=close;
   let blob;try{const r=await fetch(fileUrl(id));if(!r.ok)throw new Error(r.status);blob=await r.blob();if(!blob.size)throw new Error('empty')}catch(err){$('#fv_b').innerHTML='<div class="fv-msg">'+_('مقدرتش أفتح الملف. جرب تاني أو ارفعه من جديد.','Could not open the file. Try again or re-upload it.')+'</div>';return}
   const ct=blob.type||meta.ct||'';const isPdf=/pdf/i.test(ct)||/\.pdf$/i.test(name);
   $('#fv_dl').onclick=async()=>{if(!dl)return toast(_('التحميل مش متاح هنا','Download not available here'));let fn=name;if(!/\.[a-z0-9]{2,5}$/i.test(fn))fn+=isPdf?'.pdf':'.jpg';try{await dl.save({filename:fn,data:blob})}catch(err){if(err&&err.code!=='declined')toast(_('مقدرتش أحمل الملف','Download failed'))}};
-  const b=$('#fv_b');b.innerHTML='';
-  if(!isPdf){const u=URL.createObjectURL(blob);b.innerHTML='<img class="fv-img" src="'+u+'">';$('#fv_pr').onclick=()=>printImgs([u]);return}
+  const b=$('#fv_b');b.innerHTML='';fvPick(b,owner,!!o.pick);
+  if(!isPdf){const u=URL.createObjectURL(blob);b.innerHTML='<div class="fv-pw"><img class="fv-img" src="'+u+'" draggable="false"></div>';$('#fv_pr').onclick=()=>printImgs([u]);return}
   try{const lib=await loadPdfJs();const pdf=await lib.getDocument({data:await blob.arrayBuffer()}).promise;const urls=[];
-    for(let p=1;p<=pdf.numPages;p++){const pg=await pdf.getPage(p);const vp0=pg.getViewport({scale:1});const sc=Math.min(2.2,1600/vp0.width);const vp=pg.getViewport({scale:sc});const c=document.createElement('canvas');c.width=vp.width;c.height=vp.height;c.className='fv-pg';await pg.render({canvasContext:c.getContext('2d'),viewport:vp}).promise;b.appendChild(c);urls.push(c.toDataURL('image/jpeg',.9))}
+    for(let p=1;p<=pdf.numPages;p++){const pg=await pdf.getPage(p);const vp0=pg.getViewport({scale:1});const sc=Math.min(2.2,1600/vp0.width);const vp=pg.getViewport({scale:sc});const c=document.createElement('canvas');c.width=vp.width;c.height=vp.height;c.className='fv-pg';await pg.render({canvasContext:c.getContext('2d'),viewport:vp}).promise;const w=document.createElement('div');w.className='fv-pw';w.appendChild(c);b.appendChild(w);urls.push(c.toDataURL('image/jpeg',.9))}
     $('#fv_pr').onclick=()=>printImgs(urls)}catch(err){b.innerHTML='<div class="fv-msg">'+_('مقدرتش أعرض الـ PDF هنا. استخدم زرار تحميل.','Could not display this PDF here. Use Download.')+'</div>'}}
 function printImgs(urls){const f=document.createElement('iframe');f.style.cssText='position:fixed;width:0;height:0;border:0';document.body.appendChild(f);const d=f.contentDocument;d.open();d.write('<!doctype html><html><head><style>@page{margin:8mm}body{margin:0}img{display:block;max-width:100%;max-height:270mm;margin:0 auto;page-break-after:always}</style></head><body>'+urls.map(u=>'<img src="'+u+'">').join('')+'</body></html>');d.close();setTimeout(()=>{try{f.contentWindow.print()}catch(e){}setTimeout(()=>f.remove(),3000)},500)}
 document.addEventListener('click',ev=>{const a=ev.target.closest&&ev.target.closest('a[href]');if(!a)return;const id=fileIdFromHref(a.getAttribute('href'));if(!id)return;ev.preventDefault();ev.stopPropagation();viewFile(id,a.getAttribute('title')||null)},true);
@@ -2385,7 +2433,7 @@ const ACT={
   repone:t=>{const e=byKey(t.dataset.k);if(e)showReport(repWorker(e),'Worker_Report_'+safeName(e.empId||e.name)+'.html',_('تقرير العامل: ','Worker report: ')+e.name,false)},
   repall:async()=>{const list=filteredWorkers();if(!list.length)return toast(_('القائمة فاضية','The list is empty'));await preloadPhotos(list);showReport(repList(list),'Workers_Report_'+TODAY+'.html',_('تقرير العمال','Workers report')+' ('+list.length+')',true)},
   repalerts:()=>showReport(repAlerts(),'Documents_Report_'+TODAY+'.html',_('تقرير المستندات','Documents report'),false),
-  photo:t=>pickPhoto(t.dataset.k),
+  photo:t=>photoMenu(t.dataset.k),
   delphoto:async t=>{if(!canWrite())return;const e0=byKey(t.dataset.k);if(!e0||!e0.photo)return;
     if(t.dataset.sure!=='1'){t.dataset.sure='1';t.textContent=_('تأكيد حذف الصورة','Confirm delete photo');return}
     try{const e=JSON.parse(JSON.stringify(e0));const old=e.photo;delete e.photo;logPush(e,_('حذف الصورة الشخصية','Photo removed'));await putEmp(e);

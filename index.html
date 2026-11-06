@@ -258,7 +258,9 @@ legend{font-weight:600;font-size:13px;color:var(--teal);padding:0;margin-bottom:
 .wk-t .nm{min-width:0;font-size:12.5px}
 .wk .mv{grid-column:2;font-size:12px;padding:3px 8px;color:var(--muted)}
 .lead-row{display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--line);background:var(--accent-soft);font-size:12px}
-.lead-row b{color:var(--accent);white-space:nowrap}.lead-row select{flex:1;min-width:0;font-size:12px;padding:3px 8px}
+.lead-row b{color:var(--accent);white-space:nowrap}.lead-row .wsel{flex:1;min-width:0}.lead-row .wsel input{width:100%;font-size:12px;padding:4px 8px}
+.lead-row .wsel-o .nm{font-size:12.5px}.lead-row .wsel-o .sub{font-size:11px;color:var(--muted)}
+.col:has(.lead-row .wsel-l:not([hidden])){overflow:visible;position:relative;z-index:20}
 .wk.lead{background:var(--accent-soft);box-shadow:inset 3px 0 0 var(--accent)}
 .lead-tag{display:inline-block;font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:999px;background:var(--accent);color:var(--accent-ink);margin-inline-start:6px;vertical-align:1px}
 .fgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:14px}
@@ -1448,12 +1450,13 @@ function fillDist(){const b=$('#dboard');if(!b)return;const by=S.dist.by,q=S.dis
     if(ld)ws.sort((a,b)=>(b._k===lk)-(a._k===lk));
     const leadOn=e=>by==='designation'?[]:Object.entries(leadsOf(by)).filter(([gg,kk])=>kk===e._k&&groups.includes(gg)).map(([gg])=>gg);
     const leadSel=canLead?'<div class="lead-row"><b>★ '+_('الفورمن','Foreman')+'</b><select data-chg="lead" data-g="'+esc(g)+'" aria-label="'+_('اختار الفورمن','Choose foreman')+'"><option value="">'+_('— بدون —','— None —')+'</option>'+
-      active().slice().sort((a,b)=>a.name.localeCompare(b.name)).map(e=>'<option value="'+e._k+'"'+(e._k===lk?' selected':'')+'>'+esc(e.name)+(e.empId?' ('+esc(e.empId)+')':'')+((e[by]||'')!==g?' · '+esc(e[by]?(map?tr(map,e[by]):e[by]):_('غير موزع','Unassigned')):'')+'</option>').join('')+'</select></div>':'';
+      active().slice().sort((a,b)=>a.name.localeCompare(b.name)).map(e=>'<option value="'+e._k+'"'+(e._k===lk?' selected':'')+'>'+esc(e.name)+(e.empId?' ('+esc(e.empId)+')':'')+((e[by]||'')!==g?' · '+esc(e[by]?(map?tr(map,e[by]):e[by]):_('غير موزع','Unassigned')):'')+'</option>').join('')+'</select>'+(ld?'<button type="button" class="btn sm" data-act="leadclr" data-g="'+esc(g)+'" title="'+_('شيل الفورمن','Remove foreman')+'">✕</button>':'')+'</div>':'';
     return '<section class="col'+(g?'':' none')+'"><div class="col-h"><h3>'+esc(g?(map?tr(map,g):g):_('غير موزع','Unassigned'))+'</h3><span class="sp"></span><span class="cb">'+ws.length+'</span></div>'+leadSel+
      (ld&&(ld[by]||'')!==g?'<div class="wk lead">'+avatar(ld)+'<div class="wk-t" data-act="open" data-k="'+ld._k+'"><div class="nm">'+esc(ld.name)+'<span class="lead-tag">★ '+_('فورمن','Foreman')+'</span></div><div class="sub">'+(ld.empId?'<span class="id">'+esc(ld.empId)+'</span> · ':'')+esc(ld.designation||'')+' · '+_('من ','from ')+esc(ld[by]?(map?tr(map,ld[by]):ld[by]):_('غير موزع','Unassigned'))+'</div></div></div>':'')+
      '<div class="col-b">'+
      (ws.length?ws.map(e=>'<div class="wk'+(e._k===lk?' lead':'')+'">'+avatar(e)+'<div class="wk-t" data-act="open" data-k="'+e._k+'"><div class="nm">'+esc(e.name)+leadOn(e).map(gg=>'<span class="lead-tag">★ '+(gg===g?_('فورمن','Foreman'):_('فورمن ','Foreman · ')+esc(map?tr(map,gg):gg))+'</span>').join('')+'</div><div class="sub">'+(e.empId?'<span class="id">'+esc(e.empId)+'</span> · ':'')+esc(e.designation||'')+(by==='section'&&e.department?' · '+esc(tr('department',e.department)):'')+'</div></div>'+
-      '<select class="mv" data-chg="grp" data-k="'+e._k+'" aria-label="'+_('نقل إلى','Move to')+'" title="'+_('نقل إلى','Move to')+'">'+opts(groups,e[by]||'',map,_('غير موزع','Unassigned'))+'</select></div>').join(''):'<div class="empty" style="padding:14px">'+_('لا يوجد عمال','No workers')+'</div>')+'</div></section>'}).join('')}
+      '<select class="mv" data-chg="grp" data-k="'+e._k+'" aria-label="'+_('نقل إلى','Move to')+'" title="'+_('نقل إلى','Move to')+'">'+opts(groups,e[by]||'',map,_('غير موزع','Unassigned'))+'</select></div>').join(''):'<div class="empty" style="padding:14px">'+_('لا يوجد عمال','No workers')+'</div>')+'</div></section>'}).join('');
+  b.querySelectorAll('select[data-chg="lead"]').forEach(el=>wsel(el,true))}
 
 /* ---------- workforce ---------- */
 function forceList(){const f=S.force,q=f.q.trim().toLowerCase();return active().filter(e=>(!q||[e.name,e.empId,e.designation].join(' ').toLowerCase().includes(q))&&(!f.dept||e.department===f.dept)&&(!f.comp||e.company===f.comp)&&(!f.ph||(f.ph==='y'?!!e.photo:!e.photo))).sort((a,b)=>(a.sn||0)-(b.sn||0))}
@@ -2280,7 +2283,7 @@ function repCash(){const f=S.cf,P=cashPeriod(),rows=cashFiltered();
 /* ---------- modal ---------- */
 function modal(html){$('#modal-root').innerHTML='<div class="modal" data-act="mback">'+html+'</div>';for(const id of ['l_emp','r_emp','b_emp','w_emp','c_e','pp_emp']){const el=$('#'+id);if(el)wsel(el)}}
 /* searchable worker picker: type a name or code */
-function wsel(sel){const box=document.createElement('div');box.className='wsel';sel.after(box);sel.hidden=true;
+function wsel(sel,keep){const box=document.createElement('div');box.className='wsel';sel.after(box);sel.hidden=true;
   const inp=document.createElement('input');inp.type='search';inp.autocomplete='off';inp.dir='auto';inp.placeholder=_('اكتب اسم العامل أو الكود…','Type a worker name or code…');
   const ul=document.createElement('div');ul.className='wsel-l';ul.hidden=true;box.append(inp,ul);
   const label=k=>{const e=byKey(k);return e?e.name+(e.empId?' — '+e.empId:''):''};
@@ -2296,7 +2299,7 @@ function wsel(sel){const box=document.createElement('div');box.className='wsel';
   if(sel.value){inp.value=label(sel.value);box.classList.add('set')}
   inp.addEventListener('focus',()=>{inp.select();show()});
   inp.addEventListener('click',()=>{if(box.classList.contains('set'))inp.select();if(ul.hidden)show()});
-  inp.addEventListener('input',()=>{box.classList.remove('set');if(sel.value){sel.value='';sel.dispatchEvent(new Event('change',{bubbles:true}))}show()});
+  inp.addEventListener('input',()=>{box.classList.remove('set');if(!keep&&sel.value){sel.value='';sel.dispatchEvent(new Event('change',{bubbles:true}))}show()});
   inp.addEventListener('keydown',ev=>{if(ul.hidden)return;if(ev.key==='ArrowDown'){ev.preventDefault();cur=Math.min(hits.length-1,cur+1);mark()}else if(ev.key==='ArrowUp'){ev.preventDefault();cur=Math.max(0,cur-1);mark()}else if(ev.key==='Enter'){ev.preventDefault();if(hits[cur])pick(hits[cur])}else if(ev.key==='Escape'){ev.stopPropagation();ul.hidden=true}});
   ul.addEventListener('mousedown',ev=>{const o=ev.target.closest('.wsel-o');if(o){ev.preventDefault();pick(hits[+o.dataset.i])}});
   inp.addEventListener('blur',()=>setTimeout(()=>{ul.hidden=true;if(!sel.value)inp.value='';else inp.value=label(sel.value)},120))}
@@ -2358,6 +2361,7 @@ async function quickSet(k,field,val){if(!canWrite())return;const e0=byKey(k);if(
   logPush(e,lab+(map?tr(map,e[field]||''):(e[field]||'—'))+' → '+(map?tr(map,val):(val||'—')));e[field]=val;
   try{await putEmp(e);toast(e.name+': '+(map?tr(map,val):(val||'—')))}catch(err){toast(ERRSAVE())}}
 const ACT={
+  leadclr:t=>setLead(S.dist.by,t.dataset.g,''),
   lang:()=>{LANG=LANG==='en'?'ar':'en';try{localStorage.setItem('wk_lang',LANG)}catch(e){}const m=$('#modal-root');if(m.innerHTML)closeModal();render()},
   open:t=>{closeModal();S.confirmDel=false;S.ptab='info';location.hash='w-'+t.dataset.k},
   ptab:t=>{S.ptab=t.dataset.v;render()},
@@ -2496,7 +2500,7 @@ document.addEventListener('change',ev=>{const t=ev.target;
   else if(t.dataset.chg==='vs')quickSet(t.dataset.k,'visaStatus',t.value);
   else if(t.dataset.chg==='st'){if(t.value==='On Site')openSite(t.dataset.k);else if(t.value==='Working'&&(byKey(t.dataset.k)||{}).status==='On Site')backFromSite(t.dataset.k);else quickSet(t.dataset.k,'status',t.value)}
   else if(t.dataset.chg==='grp')quickSet(t.dataset.k,S.dist.by,t.value);
-  else if(t.dataset.chg==='lead')setLead(S.dist.by,t.dataset.g,t.value);
+  else if(t.dataset.chg==='lead'){if(t.value)setLead(S.dist.by,t.dataset.g,t.value)}
   else if(t.dataset.chg==='room')quickSet(t.dataset.k,'room',t.value);
   else if(t.dataset.chg==='roomcap'){const R=campRooms();const r=R.find(x=>x.no===t.dataset.r);if(r){r.cap=Math.max(0,parseInt(t.value,10)||0);saveRooms(R).then(ok=>{if(ok){toast(_('تم حفظ السعة','Capacity saved'));render()}})}}
   else if(t.dataset.chg==='regpos'){const v2=parseInt(t.value,10);if(v2>0)regMoveTo(t.dataset.k,v2-1)}

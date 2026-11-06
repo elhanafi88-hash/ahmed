@@ -258,7 +258,7 @@ legend{font-weight:600;font-size:13px;color:var(--teal);padding:0;margin-bottom:
 .wk-t .nm{min-width:0;font-size:12.5px}
 .wk .mv{grid-column:2;font-size:12px;padding:3px 8px;color:var(--muted)}
 .lead-row{display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--line);background:var(--accent-soft);font-size:12px}
-.lead-row b{color:var(--accent);white-space:nowrap}.lead-row .wsel{flex:1;min-width:0}.lead-row .wsel input{width:100%;font-size:12px;padding:4px 8px}
+.lead-row b{color:var(--accent);white-space:nowrap}.lead-row{position:relative}.lead-row .wsel{flex:1;min-width:0;position:static}.lead-row .wsel-l{inset-inline:6px;top:calc(100% - 2px);overflow-x:hidden;max-height:360px}.lead-row .wsel-o>div{min-width:0}.lead-row .wsel-o .nm{white-space:normal}.lead-row .wsel input{width:100%;font-size:12px;padding:4px 8px}
 .lead-row .wsel-o .nm{font-size:12.5px}.lead-row .wsel-o .sub{font-size:11px;color:var(--muted)}
 .col:has(.lead-row .wsel-l:not([hidden])){overflow:visible;position:relative;z-index:20}
 .wk.lead{background:var(--accent-soft);box-shadow:inset 3px 0 0 var(--accent)}

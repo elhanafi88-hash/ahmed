@@ -602,7 +602,7 @@ const S={db:null,dl:null,ready:false,emps:[],leaves:[],lists:{...DEFAULT_LISTS},
 const byKey=k=>S.emps.find(e=>e._k===k);
 const active=()=>S.emps.filter(e=>!INACTIVE.has(e.status));
 
-const PROB_MONTHS=2;
+const PROB_MONTHS=6;
 const DOCS=[
   {k:'visaExpiry',l:['التأشيرة / الإقامة','Visa / Residency'],num:'visaNo',ft:'visa'},
   {k:'eidExpiry',l:['الهوية الإماراتية','Emirates ID'],num:'eid',ft:'eid'},

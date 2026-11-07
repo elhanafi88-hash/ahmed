@@ -1292,6 +1292,7 @@ const REP_CSS=`.rp{background:#fff;color:#1a222c;font-family:"IBM Plex Sans Arab
 .reg .rr-top i{font-style:normal;background:#13283C;color:#fff;font-family:"IBM Plex Mono",monospace;font-size:9px;font-weight:600;padding:.2mm 1.4mm;border-radius:.8mm;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .reg .rr-cd{font-family:"IBM Plex Mono",monospace;font-size:10px;font-weight:600;color:#1C5A8A}
 .reg .rr-nm{font-size:11px;font-weight:700;line-height:1.22;color:#1a222c}
+.reg .rr-new{display:inline-block;margin-inline-start:4px;padding:0 5px;border-radius:8px;background:#e3edfb;color:#1f5fa8;font-size:9px;font-weight:700;vertical-align:middle;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .reg .rr-tr{font-size:9.5px;font-weight:600;color:#1E7470}
 .reg .rr-tr span{color:#8a96a3;font-weight:500}
 .reg .rg-foot{margin-top:5mm;padding-top:2mm;border-top:1px solid #d3dae1;display:flex;justify-content:space-between;font-size:9px;color:#8a96a3;font-family:"IBM Plex Mono",monospace}
@@ -1717,7 +1718,7 @@ function regHidden(){return active().filter(e=>e.status!=='Pending Joining'&&e.r
 function repRegister(list){
   const cats=regGroups(list).map(g=>[g[1],g[2]]),groups=regSections(list);
   let n=0;const dir=LANG==='en'?'ltr':'rtl';
-  const row=e=>{n++;const d=e.photo&&S.pdata[e.photo];return '<div class="rr"><div class="rr-ph">'+(d?'<img src="'+d+'" alt="">':'<span>'+esc(initials(e.name))+'</span>')+'</div><div class="rr-tx"><div class="rr-top"><i>'+String(n).padStart(2,'0')+'</i><span class="rr-cd">'+(e.empId?esc(e.empId):'—')+'</span></div><div class="rr-nm">'+esc(e.name)+'</div><div class="rr-tr">'+esc(e.designation||'—')+'</div></div></div>'};
+  const row=e=>{n++;const d=e.photo&&S.pdata[e.photo];return '<div class="rr"><div class="rr-ph">'+(d?'<img src="'+d+'" alt="">':'<span>'+esc(initials(e.name))+'</span>')+'</div><div class="rr-tx"><div class="rr-top"><i>'+String(n).padStart(2,'0')+'</i><span class="rr-cd">'+(e.empId?esc(e.empId):'—')+'</span></div><div class="rr-nm">'+esc(e.name)+(isNewW(e)?'<span class="rr-new">'+_('جديد','New')+'</span>':'')+'</div><div class="rr-tr">'+esc(e.designation||'—')+'</div></div></div>'};
   return '<div class="rp a3 reg" dir="'+dir+'">'+
    '<div class="rg-head"><div class="rg-l"><span class="rg-logo"><img src="'+LOGO+'" alt="METAPLEX"></span><div><div class="rg-title">'+_('سجل صور العمال','Worker Photo Register')+' <span>· FACTORY MANPOWER</span></div></div></div><div class="rg-tot"><b>'+list.length+'</b><span>'+_('عامل','workers')+'</span><em>'+dmy(TODAY)+'</em></div></div>'+
    '<div class="rg-sum">'+cats.map(([g,ws])=>'<div><b>'+ws.length+'</b><span>'+esc(g)+'</span></div>').join('')+'</div>'+

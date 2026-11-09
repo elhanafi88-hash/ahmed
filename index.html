@@ -1,5 +1,6 @@
 <!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <title>سجل عمال ميتابلكس</title>
+<link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#0f2234"><meta name="mobile-web-app-capable" content="yes"><link rel="apple-touch-icon" href="icon-192.png">
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -756,6 +757,7 @@ function renderKiosk(v){document.body.classList.add('kiosk-on');
   const inp=$('#k_code');if(inp){inp.focus();inp.oninput=()=>{K.code=inp.value;K.err=''};inp.onkeydown=ev=>{if(ev.key==='Enter')kGo()}}
   if(K.k||K.list||K.done||K.pinMode)kResetIdle(K.done?5:25)}
 const kHm=t=>{if(!t)return '';const [h,m]=t.split(':').map(Number);return ((h%12)||12)+':'+pad(m)+(h<12?' AM':' PM')};
+document.addEventListener('pointerdown',()=>{try{if(route()!=='kiosk'||document.fullscreenElement||!document.documentElement.requestFullscreen)return;document.documentElement.requestFullscreen({navigationUI:'hide'}).catch(()=>{})}catch(e){}},true);
 function kPhoto(e){return e&&e.photo?'<img src="'+esc(photoSrc(e.photo))+'" alt="">':'<span>'+esc(initials(e?e.name:'?'))+'</span>'}
 function kGo(){const r=kFind(K.code);K.err='';if(!r.length){K.err='Code not found · الكود ده مش موجود';K.code='';renderKiosk($('#view'));return}if(r.length===1)K.k=r[0]._k;else K.list=r;renderKiosk($('#view'))}
 async function kPunch(x){if(K.busy||!K.k)return;if(!S.db)return toast(_('الحفظ غير متاح','Saving not available'));K.busy=true;const k=K.k;const {ymd,hm}=kNow();const SH=SHIFT();let note='';

@@ -663,7 +663,7 @@ const MISS={
 /* ---------- utils ---------- */
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const $=s=>document.querySelector(s);
-function savedFlash(){let el=$('#saved-flash');if(!el){el=document.createElement('div');el.id='saved-flash';el.setAttribute('role','status');document.body.appendChild(el)}el.textContent='✓ '+_('تم الحفظ','Saved');el.classList.remove('on');void el.offsetWidth;el.classList.add('on');clearTimeout(savedFlash._t);savedFlash._t=setTimeout(()=>el.classList.remove('on'),1800)}
+function savedFlash(){let el=$('#saved-flash');if(!el){el=document.createElement('div');el.id='saved-flash';el.setAttribute('role','status');document.body.appendChild(el)}el.textContent='✓ '+(route()==='kiosk'?'Saved':_('تم الحفظ','Saved'));el.classList.remove('on');void el.offsetWidth;el.classList.add('on');clearTimeout(savedFlash._t);savedFlash._t=setTimeout(()=>el.classList.remove('on'),1800)}
 function toast(msg,ms=2600){const r=$('#toast-root');r.innerHTML='<div class="toast" role="status">'+esc(msg)+'</div>';clearTimeout(toast._t);toast._t=setTimeout(()=>r.innerHTML='',ms)}
 const idJob=e=>idHtml(e)+(e.designation?' <span class="muted">·</span> <span class="sub">'+esc(e.designation)+'</span>':'');
 const idHtml=e=>e.empId?'<span class="id">'+esc(e.empId)+'</span>':'<span class="id none">'+_('بدون رقم','No ID')+'</span>';
@@ -731,23 +731,23 @@ function kTick(){const c=$('#k_clock');if(!c){clearInterval(K.clock);K.clock=nul
 function kRecent(){const {ymd}=kNow();const m=ymd.slice(0,7),d=+ymd.slice(8);const doc=attDoc(m);if(!doc)return [];const out=[];
   for(const [k,r] of Object.entries(doc.rows||{}))for(const p of ((r.k&&r.k[d])||[])){const e=byKey(k);if(e)out.push({e,...p})}return out.sort((a,b)=>(b.at||0)-(a.at||0)).slice(0,6)}
 function renderKiosk(v){document.body.classList.add('kiosk-on');
-  const head='<div class="k-top"><img class="k-logo" src="'+LOGO+'" alt=""><div class="k-co"><b>METAPLEX STEEL</b><span>Attendance · الحضور</span></div><span class="sp"></span><div class="k-time"><b id="k_clock"></b><span id="k_date"></span></div><button class="k-exit" data-act="kexit" title="Exit">✕ رجوع للسيستم</button></div>';
+  const head='<div class="k-top"><img class="k-logo" src="'+LOGO+'" alt=""><div class="k-co"><b>METAPLEX STEEL</b><span>Attendance</span></div><span class="sp"></span><div class="k-time"><b id="k_clock"></b><span id="k_date"></span></div><button class="k-exit" data-act="kexit" title="Exit">✕ Exit</button></div>';
   let body='';
-  if(K.done){const e=byKey(K.done.k);body='<div class="k-card k-ok'+(K.done.x==='out'?' out':'')+'"><div class="k-ph big">'+kPhoto(e)+'</div><div class="k-tick">✓</div><h2>'+esc(e?e.name:'')+'</h2><div class="k-big">'+(K.done.x==='in'?'IN':'OUT')+' <small dir="rtl">'+(K.done.x==='in'?'دخول':'خروج')+'</small></div><div class="k-clock2" dir="ltr">'+kHm(K.done.t)+'</div>'+(K.done.note?'<div class="k-note">'+esc(K.done.note)+'</div>':'')+'<div class="k-sub">Thank you · شكراً</div></div>'}
-  else if(!kGetPin()){body='<div class="k-card"><h2>Set tablet PIN · حط رقم سري للتابلت</h2><div class="k-sub" style="margin:0 0 8px">4–8 digits · من 4 لـ 8 أرقام</div><div class="k-code ltr" style="letter-spacing:.4em">'+('•'.repeat(K.pin.length)||'&nbsp;')+'</div>'+(K.err?'<div class="k-err">'+esc(K.err)+'</div>':'')+
+  if(K.done){const e=byKey(K.done.k);body='<div class="k-card k-ok'+(K.done.x==='out'?' out':'')+'"><div class="k-ph big">'+kPhoto(e)+'</div><div class="k-tick">✓</div><h2>'+esc(e?e.name:'')+'</h2><div class="k-big">'+(K.done.x==='in'?'IN':'OUT')+'</div><div class="k-clock2" dir="ltr">'+kHm(K.done.t)+'</div>'+(K.done.note?'<div class="k-note">'+esc(K.done.note)+'</div>':'')+'<div class="k-sub">Thank you</div></div>'}
+  else if(!kGetPin()){body='<div class="k-card"><h2>Set tablet PIN</h2><div class="k-sub" style="margin:0 0 8px">4–8 digits</div><div class="k-code ltr" style="letter-spacing:.4em">'+('•'.repeat(K.pin.length)||'&nbsp;')+'</div>'+(K.err?'<div class="k-err">'+esc(K.err)+'</div>':'')+
      '<div class="k-pad">'+['1','2','3','4','5','6','7','8','9','⌫','0','OK'].map(x=>'<button data-act="kkey" data-v="'+x+'" class="'+(x==='OK'?'ok':x==='⌫'?'bk':'')+'">'+x+'</button>').join('')+'</div></div>'}
-  else if(K.pinMode){body='<div class="k-card"><h2>Admin PIN · الرقم السري</h2><div class="k-code ltr" style="letter-spacing:.4em">'+('•'.repeat(K.pin.length)||'&nbsp;')+'</div>'+(K.err?'<div class="k-err">'+esc(K.err)+'</div>':'')+
-     '<div class="k-pad">'+['1','2','3','4','5','6','7','8','9','⌫','0','OK'].map(x=>'<button data-act="kkey" data-v="'+x+'" class="'+(x==='OK'?'ok':x==='⌫'?'bk':'')+'">'+x+'</button>').join('')+'</div><button class="k-back" data-act="kback">✕ Back · رجوع</button></div>'}
-  else if(K.k){const e=byKey(K.k);const t=kToday(K.k);const st=t.in&&t.out?'<span class="ltr">IN '+kHm(t.in)+' · OUT '+kHm(t.out)+'</span>':t.in?'<span dir="ltr">IN '+kHm(t.in)+'</span> · <span dir="rtl">سجلت دخول</span>':'Not checked in today · <span dir="rtl">لسه ماسجلتش دخول النهارده</span>';
+  else if(K.pinMode){body='<div class="k-card"><h2>Admin PIN</h2><div class="k-code ltr" style="letter-spacing:.4em">'+('•'.repeat(K.pin.length)||'&nbsp;')+'</div>'+(K.err?'<div class="k-err">'+esc(K.err)+'</div>':'')+
+     '<div class="k-pad">'+['1','2','3','4','5','6','7','8','9','⌫','0','OK'].map(x=>'<button data-act="kkey" data-v="'+x+'" class="'+(x==='OK'?'ok':x==='⌫'?'bk':'')+'">'+x+'</button>').join('')+'</div><button class="k-back" data-act="kback">✕ Back</button></div>'}
+  else if(K.k){const e=byKey(K.k);const t=kToday(K.k);const st=t.in&&t.out?'<span class="ltr">IN '+kHm(t.in)+' · OUT '+kHm(t.out)+'</span>':t.in?'<span dir="ltr">IN '+kHm(t.in)+'</span> · Checked in':'Not checked in today';
     const canIn=!t.in,canOut=!!t.in;
     body='<div class="k-card"><div class="k-ph big">'+kPhoto(e)+'</div><h2>'+esc(e.name)+'</h2><div class="k-meta"><span class="ltr">'+esc(e.empId)+'</span> · '+esc(e.designation||'')+'</div><div class="k-st">'+st+'</div>'+
-     '<div class="k-q">Is this you? · <span dir="rtl">هل ده انت؟</span></div><div class="k-acts">'+
-     '<button class="k-in" data-act="kpunch" data-x="in"'+(canIn?'':' disabled')+'>IN<small>دخول</small></button>'+
-     '<button class="k-out" data-act="kpunch" data-x="out"'+(canOut?'':' disabled')+'>OUT<small>خروج</small></button></div>'+
-     '<button class="k-back" data-act="kback">✕ Not me · مش أنا</button></div>'}
-  else if(K.list){body='<div class="k-card"><h2>Choose your name · اختار اسمك</h2><div class="k-pick">'+K.list.map(e=>'<button data-act="kpick" data-k="'+e._k+'"><span class="k-ph">'+kPhoto(e)+'</span><b>'+esc(e.name)+'</b><small class="ltr">'+esc(e.empId)+'</small></button>').join('')+'</div><button class="k-back" data-act="kback">✕ Back · رجوع</button></div>'}
+     '<div class="k-q">Is this you?</div><div class="k-acts">'+
+     '<button class="k-in" data-act="kpunch" data-x="in"'+(canIn?'':' disabled')+'>IN</button>'+
+     '<button class="k-out" data-act="kpunch" data-x="out"'+(canOut?'':' disabled')+'>OUT</button></div>'+
+     '<button class="k-back" data-act="kback">✕ Not me</button></div>'}
+  else if(K.list){body='<div class="k-card"><h2>Choose your name</h2><div class="k-pick">'+K.list.map(e=>'<button data-act="kpick" data-k="'+e._k+'"><span class="k-ph">'+kPhoto(e)+'</span><b>'+esc(e.name)+'</b><small class="ltr">'+esc(e.empId)+'</small></button>').join('')+'</div><button class="k-back" data-act="kback">✕ Back</button></div>'}
   else{const pre=[...new Set(kPool().map(e=>(kNorm(e.empId).match(/^[A-Z]+/)||[''])[0]).filter(Boolean))].sort();
-    body='<div class="k-card"><h2>Enter your code · اكتب الكود بتاعك</h2><input id="k_code" class="k-code ltr" value="'+esc(K.code)+'" autocomplete="off" autocapitalize="characters" spellcheck="false" inputmode="none" aria-label="Code">'+
+    body='<div class="k-card"><h2>Enter your code</h2><input id="k_code" class="k-code ltr" value="'+esc(K.code)+'" autocomplete="off" autocapitalize="characters" spellcheck="false" inputmode="none" aria-label="Code">'+
      (K.err?'<div class="k-err">'+esc(K.err)+'</div>':'')+
      '<div class="k-pre">'+pre.map(p=>'<button data-act="kkey" data-v="'+p+'">'+p+'</button>').join('')+'</div>'+
      '<div class="k-pad">'+['1','2','3','4','5','6','7','8','9','⌫','0','OK'].map(x=>'<button data-act="kkey" data-v="'+x+'" class="'+(x==='OK'?'ok':x==='⌫'?'bk':'')+'">'+x+'</button>').join('')+'</div></div>'+
@@ -759,11 +759,11 @@ function renderKiosk(v){document.body.classList.add('kiosk-on');
 const kHm=t=>{if(!t)return '';const [h,m]=t.split(':').map(Number);return ((h%12)||12)+':'+pad(m)+(h<12?' AM':' PM')};
 document.addEventListener('pointerdown',()=>{try{if(route()!=='kiosk'||document.fullscreenElement||!document.documentElement.requestFullscreen)return;document.documentElement.requestFullscreen({navigationUI:'hide'}).catch(()=>{})}catch(e){}},true);
 function kPhoto(e){return e&&e.photo?'<img src="'+esc(photoSrc(e.photo))+'" alt="">':'<span>'+esc(initials(e?e.name:'?'))+'</span>'}
-function kGo(){const r=kFind(K.code);K.err='';if(!r.length){K.err='Code not found · الكود ده مش موجود';K.code='';renderKiosk($('#view'));return}if(r.length===1)K.k=r[0]._k;else K.list=r;renderKiosk($('#view'))}
-async function kPunch(x){if(K.busy||!K.k)return;if(!S.db)return toast(_('الحفظ غير متاح','Saving not available'));K.busy=true;const k=K.k;const {ymd,hm}=kNow();const SH=SHIFT();let note='';
+function kGo(){const r=kFind(K.code);K.err='';if(!r.length){K.err='Code not found';K.code='';renderKiosk($('#view'));return}if(r.length===1)K.k=r[0]._k;else K.list=r;renderKiosk($('#view'))}
+async function kPunch(x){if(K.busy||!K.k)return;if(!S.db)return toast('Saving not available');K.busy=true;const k=K.k;const {ymd,hm}=kNow();const SH=SHIFT();let note='';
   try{const o=kRow(k,ymd,true);const r=o.r,d=o.d;r.k=r.k||{};r.k[d]=r.k[d]||[];r.k[d].push({x,t:hm,at:Date.now()});r.d[d]='P';
     const ins=r.k[d].filter(z=>z.x==='in');const firstIn=ins.length?ins[0].t:'';
-    if(x==='out'){let i=firstIn||(r.t&&r.t[d]&&r.t[d].i)||SH.s;if(!firstIn&&!(r.t&&r.t[d]))note='No IN recorded — started 7 AM · مفيش دخول، اتحسب من 7';if(tmin(i)<tmin(SH.s))i=SH.s;r.t=r.t||{};r.t[d]={i,o:hm}}
+    if(x==='out'){let i=firstIn||(r.t&&r.t[d]&&r.t[d].i)||SH.s;if(!firstIn&&!(r.t&&r.t[d]))note='No IN recorded — counted from 7 AM';if(tmin(i)<tmin(SH.s))i=SH.s;r.t=r.t||{};r.t[d]={i,o:hm}}
     attSaving=true;try{await S.db.collection('attendance').doc(o.m).set(S.att[o.m]);savedFlash&&savedFlash()}finally{attSaving=false}
     K.done={k,x,t:hm,note};K.k=null;K.code='';K.list=null}catch(err){toast(ERRSAVE())}finally{K.busy=false}
   renderKiosk($('#view'))}
@@ -779,8 +779,8 @@ function kOpen(){const has=!!kGetPin();
    '</div><div class="m-f"><button type="button" class="btn" data-act="mclose">'+_('إلغاء','Cancel')+'</button><button type="submit" class="btn pri">'+_('افتح شاشة التابلت','Open tablet screen')+'</button></div></form>');
   $('#k_copy').onclick=()=>{const i=$('#k_link');i.select();try{navigator.clipboard.writeText(i.value).then(()=>toast(_('اتنسخ اللينك','Link copied')),()=>{document.execCommand('copy');toast(_('اتنسخ اللينك','Link copied'))})}catch(e){document.execCommand('copy')}};
   $('#kform').onsubmit=ev=>{ev.preventDefault();const v=$('#k_pin1').value.trim();if(v){try{localStorage.setItem('wk_kpin',v)}catch(e){}}closeModal();location.hash='kiosk';try{document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen().catch(()=>{})}catch(e){}}}
-function kKey(v){if(!kGetPin()&&!K.pinMode){if(v==='⌫')K.pin=K.pin.slice(0,-1);else if(v==='OK'){if(K.pin.length<4)K.err='At least 4 digits · 4 أرقام على الأقل';else{try{localStorage.setItem('wk_kpin',K.pin)}catch(e){}K.pin='';K.err=''}}else if(/^\d$/.test(v)&&K.pin.length<8){K.pin+=v;K.err=''}renderKiosk($('#view'));return}
-  if(K.pinMode){if(v==='⌫')K.pin=K.pin.slice(0,-1);else if(v==='OK'){if(K.pin===kGetPin())return kLeave();K.err='Wrong PIN · رقم سري غلط';K.pin=''}else if(/^\d$/.test(v)&&K.pin.length<8){K.pin+=v;K.err=''}renderKiosk($('#view'));return}
+function kKey(v){if(!kGetPin()&&!K.pinMode){if(v==='⌫')K.pin=K.pin.slice(0,-1);else if(v==='OK'){if(K.pin.length<4)K.err='At least 4 digits';else{try{localStorage.setItem('wk_kpin',K.pin)}catch(e){}K.pin='';K.err=''}}else if(/^\d$/.test(v)&&K.pin.length<8){K.pin+=v;K.err=''}renderKiosk($('#view'));return}
+  if(K.pinMode){if(v==='⌫')K.pin=K.pin.slice(0,-1);else if(v==='OK'){if(K.pin===kGetPin())return kLeave();K.err='Wrong PIN';K.pin=''}else if(/^\d$/.test(v)&&K.pin.length<8){K.pin+=v;K.err=''}renderKiosk($('#view'));return}
   if(v==='⌫')K.code=K.code.slice(0,-1);else if(v==='OK')return kGo();else{K.code+=v;K.err=''}renderKiosk($('#view'))}
 
 /* ---------- home ---------- */

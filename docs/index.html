@@ -731,7 +731,7 @@ function kTick(){const c=$('#k_clock');if(!c){clearInterval(K.clock);K.clock=nul
 function kRecent(){const {ymd}=kNow();const m=ymd.slice(0,7),d=+ymd.slice(8);const doc=attDoc(m);if(!doc)return [];const out=[];
   for(const [k,r] of Object.entries(doc.rows||{}))for(const p of ((r.k&&r.k[d])||[])){const e=byKey(k);if(e)out.push({e,...p})}return out.sort((a,b)=>(b.at||0)-(a.at||0)).slice(0,6)}
 function renderKiosk(v){document.body.classList.add('kiosk-on');
-  const head='<div class="k-top"><img class="k-logo" src="'+LOGO+'" alt=""><div class="k-co"><b>METAPLEX STEEL</b><span>Attendance</span></div><span class="sp"></span><div class="k-time"><b id="k_clock"></b><span id="k_date"></span></div><button class="k-exit" data-act="kexit" title="Exit">✕ Exit</button></div>';
+  const head='<div class="k-top"><img class="k-logo" src="'+LOGO+'" alt=""><div class="k-co"><b>METAPLEX STEEL</b><span>Attendance</span></div><span class="sp"></span><div class="k-time"><b id="k_clock"></b><span id="k_date"></span></div><button class="k-exit" data-act="kexit" title="Admin">⚙ Admin</button><button class="k-exit" data-act="kclose" title="Close" aria-label="Close" style="font-size:20px;line-height:1;padding:6px 14px;margin-inline-start:8px">✕</button></div>';
   let body='';
   if(K.done){const e=byKey(K.done.k);body='<div class="k-card k-ok'+(K.done.x==='out'?' out':'')+'"><div class="k-ph big">'+kPhoto(e)+'</div><div class="k-tick">✓</div><h2>'+esc(e?e.name:'')+'</h2><div class="k-big">'+(K.done.x==='in'?'IN':'OUT')+'</div><div class="k-clock2" dir="ltr">'+kHm(K.done.t)+'</div>'+(K.done.note?'<div class="k-note">'+esc(K.done.note)+'</div>':'')+'<div class="k-sub">Thank you</div></div>'}
   else if(!kGetPin()){body='<div class="k-card"><h2>Set tablet PIN</h2><div class="k-sub" style="margin:0 0 8px">4–8 digits</div><div class="k-code ltr" style="letter-spacing:.4em">'+('•'.repeat(K.pin.length)||'&nbsp;')+'</div>'+(K.err?'<div class="k-err">'+esc(K.err)+'</div>':'')+
@@ -2525,7 +2525,7 @@ const ACT={
   miss:t=>go('workers',{miss:t.dataset.v}),
   fnew:()=>{S.f.nw=S.f.nw?'':'y';render()},
   clearf:()=>{Object.assign(S.f,{q:'',dept:'',comp:'',wt:'',vs:'',st:'_active',loc:'',nat:'',miss:'',vt:'',nw:''});render()},
-  kopen:()=>kOpen(), kexit:()=>kExit(), kkey:t=>kKey(t.dataset.v), kpick:t=>{K.k=t.dataset.k;K.list=null;renderKiosk($('#view'))}, kback:()=>{Object.assign(K,{k:null,list:null,done:null,pinMode:false,pin:'',err:'',code:''});renderKiosk($('#view'))}, kpunch:t=>kPunch(t.dataset.x),
+  kclose:()=>{try{window.close()}catch(e){}setTimeout(()=>{if(!document.hidden)toast('Press the Home button to close',4000)},500)}, kopen:()=>kOpen(), kexit:()=>kExit(), kkey:t=>kKey(t.dataset.v), kpick:t=>{K.k=t.dataset.k;K.list=null;renderKiosk($('#view'))}, kback:()=>{Object.assign(K,{k:null,list:null,done:null,pinMode:false,pin:'',err:'',code:''});renderKiosk($('#view'))}, kpunch:t=>kPunch(t.dataset.x),
   mclose:closeModal, mback:(t,ev)=>{if(ev.target===t)closeModal()},
   repone:t=>{const e=byKey(t.dataset.k);if(e)showReport(repWorker(e),'Worker_Report_'+safeName(e.empId||e.name)+'.html',_('تقرير العامل: ','Worker report: ')+e.name,false)},
   repall:async()=>{const list=filteredWorkers();if(!list.length)return toast(_('القائمة فاضية','The list is empty'));await preloadPhotos(list);showReport(repList(list),'Workers_Report_'+TODAY+'.html',_('تقرير العمال','Workers report')+' ('+list.length+')',true)},

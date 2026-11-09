@@ -757,7 +757,6 @@ function renderKiosk(v){document.body.classList.add('kiosk-on');
   const inp=$('#k_code');if(inp){inp.focus();inp.oninput=()=>{K.code=inp.value;K.err=''};inp.onkeydown=ev=>{if(ev.key==='Enter')kGo()}}
   if(K.k||K.list||K.done||K.pinMode)kResetIdle(K.done?5:25)}
 const kHm=t=>{if(!t)return '';const [h,m]=t.split(':').map(Number);return ((h%12)||12)+':'+pad(m)+(h<12?' AM':' PM')};
-document.addEventListener('pointerdown',()=>{try{if(route()!=='kiosk'||document.fullscreenElement||!document.documentElement.requestFullscreen)return;document.documentElement.requestFullscreen({navigationUI:'hide'}).catch(()=>{})}catch(e){}},true);
 function kPhoto(e){return e&&e.photo?'<img src="'+esc(photoSrc(e.photo))+'" alt="">':'<span>'+esc(initials(e?e.name:'?'))+'</span>'}
 function kGo(){const r=kFind(K.code);K.err='';if(!r.length){K.err='Code not found';K.code='';renderKiosk($('#view'));return}if(r.length===1)K.k=r[0]._k;else K.list=r;renderKiosk($('#view'))}
 async function kPunch(x){if(K.busy||!K.k)return;if(!S.db)return toast('Saving not available');K.busy=true;const k=K.k;const {ymd,hm}=kNow();const SH=SHIFT();let note='';
@@ -778,7 +777,7 @@ function kOpen(){const has=!!kGetPin();
    '<div class="sub" style="margin-top:6px">'+_('من غيره أي عامل يقدر يقفل الشاشة ويدخل على باقي السيستم.','Without it any worker can leave the screen and reach the rest of the system.')+'</div>'+
    '</div><div class="m-f"><button type="button" class="btn" data-act="mclose">'+_('إلغاء','Cancel')+'</button><button type="submit" class="btn pri">'+_('افتح شاشة التابلت','Open tablet screen')+'</button></div></form>');
   $('#k_copy').onclick=()=>{const i=$('#k_link');i.select();try{navigator.clipboard.writeText(i.value).then(()=>toast(_('اتنسخ اللينك','Link copied')),()=>{document.execCommand('copy');toast(_('اتنسخ اللينك','Link copied'))})}catch(e){document.execCommand('copy')}};
-  $('#kform').onsubmit=ev=>{ev.preventDefault();const v=$('#k_pin1').value.trim();if(v){try{localStorage.setItem('wk_kpin',v)}catch(e){}}closeModal();location.hash='kiosk';try{document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen().catch(()=>{})}catch(e){}}}
+  $('#kform').onsubmit=ev=>{ev.preventDefault();const v=$('#k_pin1').value.trim();if(v){try{localStorage.setItem('wk_kpin',v)}catch(e){}}closeModal();location.hash='kiosk';}}
 function kKey(v){if(!kGetPin()&&!K.pinMode){if(v==='⌫')K.pin=K.pin.slice(0,-1);else if(v==='OK'){if(K.pin.length<4)K.err='At least 4 digits';else{try{localStorage.setItem('wk_kpin',K.pin)}catch(e){}K.pin='';K.err=''}}else if(/^\d$/.test(v)&&K.pin.length<8){K.pin+=v;K.err=''}renderKiosk($('#view'));return}
   if(K.pinMode){if(v==='⌫')K.pin=K.pin.slice(0,-1);else if(v==='OK'){if(K.pin===kGetPin())return kLeave();K.err='Wrong PIN';K.pin=''}else if(/^\d$/.test(v)&&K.pin.length<8){K.pin+=v;K.err=''}renderKiosk($('#view'));return}
   if(v==='⌫')K.code=K.code.slice(0,-1);else if(v==='OK')return kGo();else{K.code+=v;K.err=''}renderKiosk($('#view'))}

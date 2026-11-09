@@ -751,7 +751,7 @@ function renderKiosk(v){document.body.classList.add('kiosk-on');
      (K.err?'<div class="k-err">'+esc(K.err)+'</div>':'')+
      '<div class="k-pre">'+pre.map(p=>'<button data-act="kkey" data-v="'+p+'">'+p+'</button>').join('')+'</div>'+
      '<div class="k-pad">'+['1','2','3','4','5','6','7','8','9','⌫','0','OK'].map(x=>'<button data-act="kkey" data-v="'+x+'" class="'+(x==='OK'?'ok':x==='⌫'?'bk':'')+'">'+x+'</button>').join('')+'</div></div>'+
-     (()=>{const r=kRecent();return r.length?'<div class="k-recent"><div class="k-rh">Last records · آخر تسجيلات</div>'+r.map(p=>'<div><span class="k-ph sm">'+kPhoto(p.e)+'</span><b>'+esc(p.e.name)+'</b><span class="'+(p.x==='in'?'in':'out')+'">'+(p.x==='in'?'IN':'OUT')+' '+kHm(p.t)+'</span></div>').join('')+'</div>':''})()}
+     ''}
   v.innerHTML='<div class="kiosk">'+head+'<div class="k-main">'+body+'</div></div>';
   if(!K.clock)K.clock=setInterval(kTick,1000);kTick();
   const inp=$('#k_code');if(inp){inp.focus();inp.oninput=()=>{K.code=inp.value;K.err=''};inp.onkeydown=ev=>{if(ev.key==='Enter')kGo()}}

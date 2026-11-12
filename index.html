@@ -2454,7 +2454,7 @@ function openCash(ck,pre){const c=ck?S.cash.find(x=>x._k===ck):{d:TODAY,type:'Fa
    '<label>'+_('المبلغ (درهم)','Amount (AED)')+' <span class="req">*</span><input type="number" min="0.01" step="any" id="c_a" value="'+(c.amt?num(c.amt):'')+'"></label>'+
    '<label>'+_('رقم الفاتورة / المرجع','Bill / ref. no.')+'<input type="text" id="c_r" dir="ltr" value="'+esc(c.ref||'')+'"></label>'+
    '<label class="full">'+_('العامل (لو الحركة لعامل)','Worker (if for a worker)')+'<select id="c_e"><option value="">—</option>'+act.map(e=>'<option value="'+e._k+'"'+(c.empKey===e._k?' selected':'')+'>'+esc(e.name)+(e.empId?' — '+esc(e.empId):'')+'</option>').join('')+'</select></label>'+
-   '<div class="full" id="c_sal" hidden style="border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--sunk)"><div class="fg">'+
+   '<div class="full" id="c_sal" hidden style="grid-column:1/-1;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--sunk)"><div class="fg" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr))">'+
     '<label>'+_('راتب شهر','Salary for')+'<input type="month" id="c_sm" value="'+esc(c.salM||TODAY.slice(0,7))+'"></label>'+
     '<label>'+_('اشتغل لحد يوم (لو بيمشي)','Worked until (if leaving)')+'<input type="date" id="c_su" value="'+esc(c.salU||'')+'"></label>'+
     '<label>'+_('عدد الأيام','Days')+'<input type="number" id="c_sd" min="0" max="30" step="any" value="'+(c.salDays!=null?num(c.salDays):'')+'"></label>'+

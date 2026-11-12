@@ -1165,7 +1165,7 @@ const REP_CSS=`.rtab.abook{table-layout:fixed;width:100%}.rtab.abook th{font-siz
 .tsheet th{padding:1mm 2mm!important;font-size:9.5px}.tsheet td{padding:.45mm 2mm!important;font-size:9.8px;line-height:1.2}.tsheet td.ot{color:#8a5a00;font-weight:700}.tsheet td.nt{font-size:9.5px;color:#5a6878}
 .tsheet tr.ts-A td{background:#fbeceb;-webkit-print-color-adjust:exact;print-color-adjust:exact}.tsheet tr.ts-x td.nt{color:#ae2a21}.tsheet tr.ts-f td{color:#b6bec7}.tsheet tr.ts-tot td{background:#eef3f8;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .pbreak{break-after:page;page-break-after:always;height:0}
-.attp td small{display:block;font-size:6.5px;color:#8a5a00;font-weight:600;line-height:1}.tsheet tr.fri td{background:#eef1f4;-webkit-print-color-adjust:exact;print-color-adjust:exact}.tsheet .kP{color:#1b7349}.tsheet .kA{color:#ae2a21}
+.attp td small{display:block;font-size:6.5px;color:#8a5a00;font-weight:600;line-height:1}.tsal{width:100%;margin-top:2.5mm}.tsal td{padding:.6mm 2mm!important;font-size:10px}.tsal td.ltr{text-align:left}.tsal tr.net td{background:#e6f2ea;font-size:11.5px;-webkit-print-color-adjust:exact;print-color-adjust:exact}.tsheet tr.fri td{background:#eef1f4;-webkit-print-color-adjust:exact;print-color-adjust:exact}.tsheet .kP{color:#1b7349}.tsheet .kA{color:#ae2a21}
 .attp .kP{color:#1b7349;font-weight:700}.attp .kA{color:#ae2a21;font-weight:700;background:#fbeceb}.attp .kL{color:#1C5A8A}.attp .kS{color:#8a5a00}.attp .kU{color:#7a4fa3}.attp .kO{color:#8a96a3}
 .rp.lvf{width:210mm;padding:9mm 10mm;font-size:11px;font-family:"IBM Plex Sans","IBM Plex Sans Arabic",Tahoma,sans-serif;display:flex;flex-direction:column;box-sizing:border-box;min-height:297mm}
 .lvf .ar{font-family:"IBM Plex Sans Arabic",Tahoma,sans-serif;direction:rtl;unicode-bidi:isolate}
@@ -1596,6 +1596,19 @@ function payCalc(r){const f=Math.min(num(r.days),30)/30;const basicE=num(r.basic
 function raiseIn(k,month){const e=byKey(k);return e?(e.raises||[]).filter(r=>(r.d||'').startsWith(month)).reduce((s,r)=>s+num(r.amount),0):0}
 function bonusIn(k,month){return S.bonuses.filter(b=>b.empKey===k&&(b.date||'').startsWith(month)).reduce((s,b)=>s+num(b.amount),0)}
 function payRowFor(e,month){const at=attSum(e._k,month);return{name:e.name,empId:e.empId||'',designation:e.designation||'',basic:num(e.basic),allow:allowOf(e),days:at?at.pay:30,otH:at?at.ot:0,bonus:bonusIn(e._k,month),deduct:warnIn(e._k,month),adv:advIn(e._k,month)}}
+function attPay(k,m){const e=byKey(k);if(!e)return null;const r=payRowFor(e,m);const pr=S.payroll[m]&&S.payroll[m].rows&&S.payroll[m].rows[k];
+  if(pr)for(const f of ['basic','allow','bonus','deduct','adv'])if(pr[f]!==''&&pr[f]!=null)r[f]=num(pr[f]);
+  const c=payCalc(r);return{...r,...c,rate:num(r.basic)/30/8*1.25}}
+function attPayBlock(k,m,print){const p=attPay(k,m);if(!p)return '';const r2=x=>money(Math.round(x*100)/100);
+  const rows=[[_('الراتب الأساسي','Basic salary'),r2(p.basic)],[_('البدلات (سكن ومواصلات وغيرها)','Allowances'),r2(p.allow)],[_('أيام مستحقة','Payable days'),p.days+' / 30'],
+   [_('الأساسي المستحق','Basic earned'),r2(p.basicE)],[_('البدلات المستحقة','Allowances earned'),r2(p.allowE)],
+   [_('الإضافي','Overtime')+' ('+hfmt(p.otH)+' '+_('ساعة','h')+' × '+r2(p.rate)+')',r2(p.ot)],[_('مكافآت','Bonuses'),r2(p.bonus)],
+   [_('الإجمالي','Gross'),r2(p.gross)],[_('خصومات','Deductions'),p.deduct?'− '+r2(p.deduct):r2(0)],[_('سلف','Advances'),p.adv?'− '+r2(p.adv):r2(0)]];
+  if(print){let h='';for(let i=0;i<rows.length;i+=2)h+='<tr><td>'+rows[i][0]+'</td><td class="ltr">'+rows[i][1]+'</td><td>'+(rows[i+1]||['',''])[0]+'</td><td class="ltr">'+(rows[i+1]||['',''])[1]+'</td></tr>';
+   return '<table class="rtab slim tsal"><thead><tr><th colspan="4">'+_('حساب الراتب','Salary calculation')+'</th></tr></thead><tbody>'+h+'<tr class="net"><td colspan="3"><b>'+_('صافي المستحق','Net pay')+'</b></td><td class="ltr"><b>'+r2(p.net)+'</b></td></tr></tbody></table>'}
+  return '<section class="panel" style="padding:14px 16px"><div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><b>'+_('حساب الراتب','Salary calculation')+'</b><span class="muted" style="font-size:12px">'+_('الإضافي = الأساسي ÷ 30 ÷ 8 × 1.25 للساعة · نفس حسبة كشف المرتبات','OT = basic ÷ 30 ÷ 8 × 1.25 per hour · same as payroll')+'</span></div>'+
+   '<table class="atday" style="max-width:560px"><tbody>'+rows.map(([a,b])=>'<tr><td>'+a+'</td><td class="num" dir="ltr" style="text-align:end">'+b+'</td></tr>').join('')+
+   '<tr><td><b style="font-size:15px">'+_('صافي المستحق','Net pay')+'</b></td><td class="num" dir="ltr" style="text-align:end;font-size:18px;font-weight:800;color:var(--ok)">'+r2(p.net)+'</td></tr></tbody></table></section>'}
 const monthName=m=>{const [y,mm]=m.split('-').map(Number);return new Date(y,mm-1,1).toLocaleDateString(LANG==='en'?'en-GB':'ar-EG',{month:'long',year:'numeric'})};
 /*SAL*/
 function salList(){const c=S.sal.cat;return jobGroups(active().filter(atFactory).filter(e=>e.status!=='Pending Joining'&&(!c||rcat(e)===c)))}
@@ -2214,11 +2227,11 @@ function renderAttEmp(v){const f=S.af,m=f.m,n=monDays(m),pool=attEmpPool(),k=att
   '<section class="panel" style="padding:14px 16px"><div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">'+avatar(e)+'<div><div class="nm" data-act="open" data-k="'+k+'" style="cursor:pointer;font-size:16px">'+esc(e.name)+newPill(e)+'</div><div class="sub">'+(e.empId?'<span class="id">'+esc(e.empId)+'</span> · ':'')+esc(e.designation||'—')+'</div></div><span class="sp" style="flex:1"></span>'+
    '<label class="muted">'+_('الدوام','Shift')+' <select class="ad-sh" dir="ltr" data-ate="shift"><option value="">7 – '+hm12(sh.e)+' · '+_('عادي','default')+'</option>'+SHIFT_ENDS.filter(x=>x!==sh.e).map(x=>'<option value="'+x+'"'+(e.shiftEnd===x?' selected':'')+'>7 – '+hm12(x)+'</option>').join('')+'</select></label>'+
    '<button class="btn" data-act="aefill">'+_('سجّل الأيام الفاضية حاضر','Mark empty days present')+'</button></div></section>'+
-  '<div class="kpis" id="aek">'+attEmpTot(k,m)+'</div>'+
+  '<div class="kpis" id="aek">'+attEmpTot(k,m)+'</div><div id="aepay">'+attPayBlock(k,m)+'</div>'+
   '<section class="panel"><div class="tw"><table class="atday atemp"><thead><tr><th>'+_('التاريخ','Date')+'</th><th>'+_('اليوم','Day')+'</th><th>'+_('الحالة','Status')+'</th><th>'+_('دخول','In')+'</th><th>'+_('خروج','Out')+'</th><th>'+_('ساعات الشغل','Hours')+'</th><th>'+_('إضافي','Overtime')+'</th><th></th></tr></thead><tbody>'+
    Array.from({length:n},(_x,j)=>attEmpRow(k,m,j+1)).join('')+'</tbody></table></div></section>'+
   '<p class="muted" style="margin:0;font-size:12.5px">'+_('غيّر الحالة أو ساعة الدخول والخروج لأي يوم وبيتحفظ لوحده. كتابة ساعات بتخلي اليوم حاضر. الحاضر من غير ساعات بيتحسب دوام عادي، ويوم الأحد كل ساعاته إضافي. الأيام المستحقة = 30 − الغياب − بدون راتب.','Change the status or in/out time for any day; it saves automatically. Entering times marks the day present. Present without times counts as a normal shift; every Sunday hour is overtime. Payable days = 30 − absent − unpaid.')+'</p>'}
-function attEmpPaint(d){const k=S.af.emp,m=S.af.m;const kk=$('#aek');if(kk)kk.innerHTML=attEmpTot(k,m);const tr_=document.querySelector('table.atemp tr[data-d="'+d+'"]');if(!tr_)return;const tmp=document.createElement('tbody');tmp.innerHTML=attEmpRow(k,m,d);tr_.replaceWith(tmp.firstElementChild)}
+function attEmpPaint(d){const k=S.af.emp,m=S.af.m;const kk=$('#aek');if(kk)kk.innerHTML=attEmpTot(k,m);const pp=$('#aepay');if(pp)pp.innerHTML=attPayBlock(k,m);const tr_=document.querySelector('table.atemp tr[data-d="'+d+'"]');if(!tr_)return;const tmp=document.createElement('tbody');tmp.innerHTML=attEmpRow(k,m,d);tr_.replaceWith(tmp.firstElementChild)}
 function adMatch(e,key){const m=S.af.m,d=S.af.day;const [c]=attCell(e._k,m,d);return key==='P'?c==='P':key==='A'?c==='A':key==='oth'?(!!c&&c!=='P'&&c!=='A'):key==='none'?!c:key==='ot'?dayHours(e._k,m,d)[1]>0:true}
 function adKpis(){const m=S.af.m,d=S.af.day,list=attList();const cnt={P:0,A:0,oth:0,none:0,ot:0};for(const e of list){const [c]=attCell(e._k,m,d);if(c==='P')cnt.P++;else if(c==='A')cnt.A++;else if(c)cnt.oth++;else cnt.none++;cnt.ot+=dayHours(e._k,m,d)[1]}
   return kpi('kg',cnt.P,_('حاضر','Present'),'ad','P')+kpi('kr',cnt.A,_('غائب','Absent'),'ad','A')+kpi('kt',cnt.oth,_('إجازة / راحة / مرضي','Leave / off / sick'),'ad','oth')+kpi('kb',cnt.none,_('لسه متسجلش','Not marked yet'),'ad','none')+kpi('ka',hfmt(Math.round(cnt.ot*10)/10),_('ساعات إضافي اليوم','Overtime hours today'),'ad','ot')}
@@ -2249,7 +2262,7 @@ function repTimeSheet(k,m){m=m||S.af.m;const n=monDays(m),e=byKey(k),t=attRowTot
    '<div class="boxes ts-b"><div><b>'+t.P+'</b><span>'+_('أيام حضور','Days present')+'</span></div><div><b>'+t.sun+'</b><span>'+_('أيام راحة اشتغلها','Days off worked')+'</span></div><div class="'+(t.A?'bad':'')+'"><b>'+t.A+'</b><span>'+_('أيام غياب','Days absent')+'</span></div><div><b>'+(t.L+t.S)+'</b><span>'+_('إجازة / مرضي','Leave / sick')+'</span></div><div><b>'+t.U+'</b><span>'+_('بدون راتب','Unpaid')+'</span></div><div><b>'+hfmt(t.hrs)+'</b><span>'+_('ساعات الشغل','Hours worked')+'</span></div><div class="ot"><b>'+hfmt(t.otAll)+'</b><span>'+_('ساعات إضافي','Overtime hours')+'</span></div><div class="pay"><b>'+t.pay+'</b><span>'+_('أيام مستحقة للراتب','Payable days')+'</span></div></div>'+
    (absDays.length?'<div class="ts-abs">'+_('أيام الغياب: ','Absent on: ')+'<b class="ltr">'+absDays.join(' · ')+'</b></div>':'')+
    '<table class="rtab slim tsheet"><thead><tr><th>'+_('التاريخ','Date')+'</th><th>'+_('اليوم','Day')+'</th><th>'+_('الحالة','Status')+'</th><th>'+_('من الساعة','From')+'</th><th>'+_('لحد الساعة','To')+'</th><th>'+_('ساعات','Hours')+'</th><th>'+_('إضافي','OT')+'</th><th>'+_('ملاحظة','Note')+'</th></tr></thead><tbody>'+rows+
-   '<tr class="ts-tot"><td colspan="5"><b>'+_('الإجمالي','Total')+'</b>'+(t.ot?' <span style="color:#5a6878">('+_('منها إضافي يدوي ','incl. manual OT ')+hfmt(t.ot)+')</span>':'')+'</td><td class="ltr"><b>'+hfmt(t.hrs)+'</b></td><td class="ltr"><b>'+hfmt(t.otAll)+'</b></td><td></td></tr></tbody></table>'+
+   '<tr class="ts-tot"><td colspan="5"><b>'+_('الإجمالي','Total')+'</b>'+(t.ot?' <span style="color:#5a6878">('+_('منها إضافي يدوي ','incl. manual OT ')+hfmt(t.ot)+')</span>':'')+'</td><td class="ltr"><b>'+hfmt(t.hrs)+'</b></td><td class="ltr"><b>'+hfmt(t.otAll)+'</b></td><td></td></tr></tbody></table>'+attPayBlock(k,m,true)+
    '<div class="sign"><div>'+_('توقيع العامل','Worker')+'</div><div>'+_('المشرف','Supervisor')+'</div><div>'+sigCell()+'</div></div>',false)}
 /* ---------- manual attendance book (printed register) ---------- */
 const ABK='attBookKeys';
@@ -2688,7 +2701,7 @@ document.addEventListener('input',ev=>{const t=ev.target,id=t.id;if(FMAP[id]){S.
   if(id==='campq'){S.camp.q=t.value;fillCamp();return}
   if(id==='ppq'){S.pp.q=t.value;clearTimeout(S.ppT);S.ppT=setTimeout(()=>{render();const el=$('#ppq');if(el){el.focus();el.setSelectionRange(el.value.length,el.value.length)}},200);return}
   if(id==='aq'){S.af.q=t.value;clearTimeout(S.aqT);S.aqT=setTimeout(()=>{render();const el=$('#aq');if(el){el.focus();el.setSelectionRange(el.value.length,el.value.length)}},250);return}
-  if(t.dataset&&t.dataset.aot){const m=S.af.m,doc=attDoc(m,true);const r=doc.rows[t.dataset.aot]=doc.rows[t.dataset.aot]||{d:{},ot:''};r.ot=t.value===''?'':num(t.value);attSave();return}
+  if(t.dataset&&t.dataset.aot){const m=S.af.m,doc=attDoc(m,true);const r=doc.rows[t.dataset.aot]=doc.rows[t.dataset.aot]||{d:{},ot:''};r.ot=t.value===''?'':num(t.value);attSave();const pp=$('#aepay');if(pp)pp.innerHTML=attPayBlock(t.dataset.aot,m);return}
   if(id==='cq'){S.cf.q=t.value;clearTimeout(S._cq);S._cq=setTimeout(()=>{render();const el=$('#cq');if(el){el.focus();el.setSelectionRange(el.value.length,el.value.length)}},250);return}
   if(id==='ffq'){S.force.q=t.value;fillForce();return}
   if(t.dataset&&t.dataset.rv&&t.dataset.rv!=='r'){const D=rvDoc();const k=t.dataset.k;const r=D.rows[k]=D.rows[k]||{};if(t.dataset.rv==='a'){r.a=t.value===''?'':num(t.value);r.auto=false}else r.n=t.value;

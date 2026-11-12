@@ -2142,7 +2142,7 @@ function parseT(v,kind){v=String(v==null?'':v).trim().toLowerCase().replace(/[٠
   if(ap){if(h>12)return null;if(ap==='p'&&h<12)h+=12;if(ap==='a'&&h===12)h=0}
   else if(h>=1&&h<=11&&(kind==='out'||h<=4))h+=12;
   return pad(h)+':'+pad(mi)}
-const tIn=(attrs,val,kind)=>'<input type="text" inputmode="text" autocomplete="off" class="tin" dir="ltr" placeholder="'+(kind==='out'?'4':'7')+'" '+attrs+' value="'+esc(val?hm12(val):'')+'">';
+const tIn=(attrs,val,kind)=>'<input type="text" inputmode="text" autocomplete="off" class="tin" dir="ltr" '+attrs+' value="'+esc(val?hm12(val):'')+'">';
 const hfmt=h=>h?(Math.round(h*10)/10).toString():'0';
 function leaveCodeOn(k,date){const l=S.leaves.find(x=>x.empKey===k&&x.from<=date&&x.to>=date&&!(x.returned&&x.returned<=date));return l?(LVCODE[l.type]||'L'):''}
 function attCell(k,m,d){const r=(attDoc(m)||{rows:{}}).rows[k];const v=r&&r.d&&r.d[d];if(v)return [v,false];const lc=leaveCodeOn(k,dstr(m,d));if(lc)return [lc,true];if(isFri(m,d))return ['O',true];return ['',false]}

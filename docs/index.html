@@ -2294,7 +2294,12 @@ function repTimeSheet(k,m){m=m||S.af.m;const n=monDays(m),e=byKey(k),t=attRowTot
    '<div class="sign"><div>'+_('توقيع العامل','Worker')+'</div><div>'+_('المشرف','Supervisor')+'</div><div>'+sigCell()+'</div></div>',false)}
 /* ---------- manual attendance book (printed register) ---------- */
 const ABK='attBookKeys';
-function bookKeys(){try{const a=JSON.parse(localStorage.getItem(ABK)||'[]');return Array.isArray(a)?a:[]}catch(x){return []}}
+function bookKeys(){let a;try{a=JSON.parse(localStorage.getItem(ABK)||'[]');if(!Array.isArray(a))a=[]}catch(x){return []}
+  // Supply workers join the book automatically, once each; if one is unticked later it stays out.
+  try{const SK='attBookSupSeen',seen=new Set(JSON.parse(localStorage.getItem(SK)||'[]')),have=new Set(a);let ch=false;
+    active().filter(isSup).forEach(e=>{if(!seen.has(e._k)){seen.add(e._k);ch=true;if(!have.has(e._k))a.push(e._k)}});
+    if(ch){localStorage.setItem(ABK,JSON.stringify(a));localStorage.setItem(SK,JSON.stringify([...seen]))}}catch(x){}
+  return a}
 function bookSet(a){try{localStorage.setItem(ABK,JSON.stringify(a))}catch(x){}}
 function bookToggle(){const n=bookKeys().filter(k=>byKey(k)).length;if(!n){S.af.book=false;return ''}return '<button class="btn'+(S.af.book?' pri':'')+'" data-act="abkonly" aria-pressed="'+(S.af.book?'true':'false')+'" title="'+_('اعرض بس العمال اللي في الدفتر، بنفس ترتيب الورق','Show only the workers in the printed book, in the same order as the paper')+'">📒 '+_('عمال الدفتر فقط','Book workers only')+' ('+n+')</button>'}
 const isoD=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');

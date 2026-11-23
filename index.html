@@ -132,6 +132,8 @@ th[data-sort]:hover{color:var(--ink)}
 th .ar{font-family:var(--f-mono);font-size:10px}
 tbody tr.row{cursor:pointer}
 tbody tr.row:hover td{background:var(--sunk)}
+th.ck,td.ck{width:34px;text-align:center;cursor:pointer}td.ck input,th.ck input{width:17px;height:17px;cursor:pointer;accent-color:var(--accent);margin:0}
+tbody tr.row.sel td{background:var(--accent-soft)}.selbar{align-items:center}.selbar[hidden]{display:none}.selcount{color:var(--accent)}
 tr:last-child td{border-bottom:0}
 .nm{font-weight:600;font-size:13px;white-space:normal;min-width:180px;direction:ltr;unicode-bidi:isolate}
 .sub{font-size:12px;color:var(--muted)}
@@ -637,7 +639,7 @@ const dLabel=n=>LANG==='en'?(n<0?'Expired '+(-n)+' days ago':n===0?'Expires toda
 
 /* ---------- state ---------- */
 const S={db:null,dl:null,ready:false,emps:[],leaves:[],lists:{...DEFAULT_LISTS},passCount:{},
-  f:{q:'',dept:'',comp:'',wt:'',vs:'',st:'_active',loc:'',nat:'',miss:'',vt:'',nw:'',sort:'sn',dir:1},
+  f:{q:'',dept:'',comp:'',wt:'',vs:'',st:'_active',loc:'',nat:'',miss:'',vt:'',nw:'',os:'',sort:'sn',dir:1}, wsel:new Set(),
   df:{type:'',win:'alert'}, lf:{show:'open'}, dist:{by:'designation',q:''}, force:{q:'',dept:'',comp:'',ph:''}, board:{cat:'',ph:'',edit:false}, pay:{month:TODAY.slice(0,7),tab:'sheet'}, raise:{per:THIS_YEAR}, sal:{cat:''}, camp:{q:''}, pp:{q:'',f:''}, rvf:{cat:''}, rv:null, att:{}, af:{m:TODAY.slice(0,7),code:'P',cat:'',wt:'',q:'',view:'day',day:+TODAY.slice(8)}, cash:[], cf:{m:'',t:'',q:''}, payroll:{}, bonuses:[], assets:null, purl:{}, pdata:{}, open:null, ptab:'info', confirmDel:false, importPlan:null, rep:null};
 const byKey=k=>S.emps.find(e=>e._k===k);
 const active=()=>S.emps.filter(e=>!INACTIVE.has(e.status));
@@ -831,8 +833,9 @@ function renderHome(v){
 function filteredWorkers(){const f=S.f,q=f.q.trim().toLowerCase();
   const m=(val,fv)=>!fv||(fv==='_none'?!val:val===fv);
   let list=S.emps.filter(e=>{
+    if(f.os)return S.wsel.has(e._k);
     if(q&&![e.name,e.empId,e.eid,e.passportNo,e.mobile,e.designation,e.visaNo].join(' ').toLowerCase().includes(q))return false;
-    if(f.vs==='_proc'?!PROC.includes(e.visaStatus):!m(e.visaStatus,f.vs))return false;
+    if(f.vs==='_visit'){if(!isVisit(e))return false}else if(f.vs==='_proc'?!PROC.includes(e.visaStatus):!m(e.visaStatus,f.vs))return false;
     if(!m(e.department,f.dept)||!m(e.company,f.comp)||!m(e.location,f.loc)||!m(e.nationality,f.nat))return false;
     if(f.st==='_active'){if(INACTIVE.has(e.status)&&!q)return false}else if(f.st&&!m(e.status,f.st))return false;
     if(f.wt&&(f.wt==='Supplier')!==isSup(e))return false;
@@ -845,29 +848,38 @@ function filteredWorkers(){const f=S.f,q=f.q.trim().toLowerCase();
   const pin=e=>{const i=PIN_TOP.indexOf(String(e.empId||''));return i<0?99:i};
   return list.sort((a,b)=>{if(s==='sn'&&dir>0){const pa=pin(a),pb=pin(b);if(pa!==pb)return pa-pb}const x=key(a),y=key(b);return (x<y?-1:x>y?1:0)*dir})}
 const PIN_TOP=['44117','MET001','MET028'];
+const isVisit=e=>e.visaType==='Visit Visa'||e.visaStatus==='Visit Visa Extended';
+function selList(){return S.emps.filter(e=>S.wsel.has(e._k)).sort((a,b)=>(a.sn||0)-(b.sn||0)||a.name.localeCompare(b.name))}
+function paintSel(){const b=$('#wselbar');if(!b)return;const n=S.wsel.size,os=S.f.os;
+  b.hidden=!n&&!os;b.innerHTML=n||os?'<b class="selcount">'+_('تم اختيار ','Selected: ')+n+_(' عامل','')+'</b>'+
+   '<button class="btn sm'+(os?' pri':'')+'" data-act="wselonly" aria-pressed="'+(os?'true':'false')+'">'+(os?_('رجوع لكل القائمة','Back to full list'):_('عرض المختارين فقط','Show selected only'))+'</button>'+
+   (n?'<button class="btn sm" data-act="wselrep">'+_('تقرير للمختارين','Report for selected')+'</button><button class="btn sm" data-act="wselxl">'+_('تصدير Excel للمختارين','Export selected to Excel')+'</button>':'')+
+   '<button class="btn sm" data-act="wselclr">'+_('إلغاء الاختيار','Clear selection')+'</button>':'';
+  const h=$('#wselall');if(h){const ks=filteredWorkers().map(e=>e._k),c=ks.filter(k=>S.wsel.has(k)).length;h.checked=!!ks.length&&c===ks.length;h.indeterminate=c>0&&c<ks.length}}
 const EXTRA={miss:v=>L(MISS[v]?.l),nat:v=>_('الجنسية: ','Nationality: ')+(v==='_none'?_('غير محددة','Not set'):tr('nationality',v)),vt:v=>tr('visaType',v),loc:v=>_('الموقع: ','Location: ')+tr('location',v)};
 function renderWorkers(v){const f=S.f;
   const chips=Object.keys(EXTRA).filter(k=>f[k]&&k!=='miss').map(k=>'<button class="chip" data-act="unf" data-v="'+k+'">'+esc(EXTRA[k](f[k]))+' ✕</button>').join('');
-  const any=chips||f.q||f.dept||f.comp||f.wt||f.vs||f.st||f.miss||f.nw;const nNew=S.emps.filter(isNewW).length;
+  const any=chips||f.q||f.dept||f.comp||f.wt||f.vs||f.st||f.miss||f.nw||f.os;const nNew=S.emps.filter(isNewW).length;
   v.innerHTML='<div class="head"><h2>'+_('العمال','Workers')+'</h2><span class="count" id="wcount"></span><span class="sp"></span><button class="btn" data-act="repall">'+_('تقرير للقائمة','List report')+'</button><button class="btn pri" data-act="new">+ '+_('إضافة عامل','Add worker')+'</button></div>'+
   '<div class="toolbar">'+
    '<input type="search" id="fq" placeholder="'+_('ابحث بالاسم أو الرقم أو الهوية أو الجواز','Search name, ID, Emirates ID or passport')+'" value="'+esc(f.q)+'" aria-label="'+_('بحث','Search')+'">'+
    '<select id="fdept" aria-label="'+_('القسم','Department')+'">'+opts(listOf('departments','department'),f.dept,'department',_('كل الأقسام','All departments'))+'<option value="_none"'+(f.dept==='_none'?' selected':'')+'>'+_('بدون قسم','No department')+'</option></select>'+
    '<select id="fcomp" aria-label="'+_('الشركة','Company')+'">'+opts(listOf('companies','company'),f.comp,'',_('كل الشركات','All companies'))+'<option value="_none"'+(f.comp==='_none'?' selected':'')+'>'+_('بدون شركة','No company')+'</option></select>'+
    '<select id="fwt" aria-label="'+_('نوع العامل','Worker type')+'"><option value="">'+_('كل الأنواع','All types')+'</option><option value="Company"'+(f.wt==='Company'?' selected':'')+'>'+_('عمال الشركة','Company workers')+' ('+S.emps.filter(e=>!INACTIVE.has(e.status)&&!isSup(e)).length+')</option><option value="Supplier"'+(f.wt==='Supplier'?' selected':'')+'>'+_('سبلاير','Supplier')+' ('+S.emps.filter(e=>!INACTIVE.has(e.status)&&isSup(e)).length+')</option></select>'+
-   '<select id="fvs" aria-label="'+_('حالة التأشيرة','Visa status')+'">'+opts(listOf('visaStatuses','visaStatus'),f.vs==='_proc'?'':f.vs,'visaStatus',_('كل التأشيرات','All visa statuses'))+'<option value="_proc"'+(f.vs==='_proc'?' selected':'')+'>'+_('قيد الإجراء','In process')+'</option></select>'+
+   '<select id="fvs" aria-label="'+_('حالة التأشيرة','Visa status')+'">'+opts(listOf('visaStatuses','visaStatus'),f.vs==='_proc'||f.vs==='_visit'?'':f.vs,'visaStatus',_('كل التأشيرات','All visa statuses'))+'<option value="_proc"'+(f.vs==='_proc'?' selected':'')+'>'+_('قيد الإجراء','In process')+'</option><option value="_visit"'+(f.vs==='_visit'?' selected':'')+'>'+_('تأشيرة زيارة','Visit visa')+' ('+S.emps.filter(e=>!INACTIVE.has(e.status)&&isVisit(e)).length+')</option></select>'+
    '<select id="fst" aria-label="'+_('حالة العمل','Work status')+'"><option value="">'+_('كل الحالات','All statuses')+'</option><option value="_active"'+(f.st==='_active'?' selected':'')+'>'+_('الحاليين فقط','Current only')+'</option>'+opts(STATUSES,STATUSES.includes(f.st)?f.st:'','status')+'<option value="_none"'+(f.st==='_none'?' selected':'')+'>'+_('غير محددة','Not set')+'</option></select>'+
    '<select id="fmiss" aria-label="'+_('نقص البيانات','Missing data')+'"'+(f.miss?' class="on"':'')+'><option value="">'+_('كل البيانات','Any data')+'</option>'+Object.entries(MISS).map(([k,m])=>{const n=S.emps.filter(e=>!INACTIVE.has(e.status)&&m.f(e)).length;return '<option value="'+k+'"'+(f.miss===k?' selected':'')+'>'+esc(L(m.l))+' ('+n+')</option>'}).join('')+'</select>'+
    '<button class="btn'+(f.nw?' pri':'')+'" data-act="fnew" aria-pressed="'+(f.nw?'true':'false')+'">'+_('العمال الجدد','New workers')+' ('+nNew+')</button>'+
    (any?'<button class="btn sm" data-act="clearf">'+_('مسح الفلاتر','Clear filters')+'</button>':'')+
-  '</div>'+(chips?'<div class="toolbar">'+chips+'</div>':'')+'<section class="panel"><div class="tw" id="wtable"></div></section>';
+  '</div>'+(chips?'<div class="toolbar">'+chips+'</div>':'')+'<div class="toolbar selbar" id="wselbar" hidden></div><section class="panel"><div class="tw" id="wtable"></div></section>';
   fillWorkers()}
 function fillWorkers(){const t=$('#wtable');if(!t)return;const list=filteredWorkers(),f=S.f;
   $('#wcount').textContent=list.length+' '+_('من','of')+' '+S.emps.length;
   const th=(k,l)=>'<th data-sort="'+k+'">'+l+(f.sort===k?' <span class="ar">'+(f.dir>0?'▲':'▼')+'</span>':'')+'</th>';
+  paintSel();
   if(!list.length){t.innerHTML='<div class="empty"><b>'+_('لا يوجد عمال بهذه الفلاتر','No workers match these filters')+'</b>'+_('غيّر البحث أو امسح الفلاتر.','Change the search or clear filters.')+'</div>';return}
-  t.innerHTML='<table><thead><tr>'+th('sn','#')+th('name',_('العامل','Worker'))+th('designation',_('المهنة','Designation'))+th('department',_('القسم والشركة','Department & company'))+th('visaStatus',_('التأشيرة','Visa'))+th('near',_('أقرب انتهاء','Next expiry'))+th('status',_('الحالة','Status'))+'</tr></thead><tbody>'+
-  list.map((e,i)=>{const n=nearest(e);return '<tr class="row" data-act="open" data-k="'+e._k+'" tabindex="0"><td class="id">'+(i+1)+'</td><td><div class="wnm">'+avatar(e)+'<div style="min-width:0"><div class="nm">'+esc(e.name)+newPill(e)+'</div>'+idHtml(e)+'</div></div></td><td>'+esc(e.designation||'—')+'</td><td class="dc">'+esc(tr('department',e.department))+'<div class="sub">'+esc(e.company||'')+'</div></td><td>'+(e.visaStatus?pill(vsTone(e.visaStatus),tr('visaStatus',e.visaStatus)):'<span class="muted">—</span>')+'<div class="sub">'+esc(e.visaType?tr('visaType',e.visaType):'')+'</div></td><td>'+(n?'<span class="pill '+n.state+'">'+esc(L(n.d.l))+'</span><div class="sub">'+dLabel(n.n)+'</div>':'<span class="muted">—</span>')+'</td><td>'+pill(stTone(e.status),tr('status',e.status||'')+siteTxt(e))+'</td></tr>'}).join('')+'</tbody></table>'}
+  t.innerHTML='<table><thead><tr><th class="ck"><input type="checkbox" id="wselall" data-act="wselall" aria-label="'+_('اختيار الكل','Select all')+'"></th>'+th('sn','#')+th('name',_('العامل','Worker'))+th('designation',_('المهنة','Designation'))+th('department',_('القسم والشركة','Department & company'))+th('visaStatus',_('التأشيرة','Visa'))+th('near',_('أقرب انتهاء','Next expiry'))+th('status',_('الحالة','Status'))+'</tr></thead><tbody>'+
+  list.map((e,i)=>{const n=nearest(e);const sl=S.wsel.has(e._k);return '<tr class="row'+(sl?' sel':'')+'" data-act="open" data-k="'+e._k+'" tabindex="0"><td class="ck" data-act="wsel" data-k="'+e._k+'"><input type="checkbox"'+(sl?' checked':'')+' aria-label="'+_('اختيار','Select')+' '+esc(e.name)+'"></td><td class="id">'+(i+1)+'</td><td><div class="wnm">'+avatar(e)+'<div style="min-width:0"><div class="nm">'+esc(e.name)+newPill(e)+'</div>'+idHtml(e)+'</div></div></td><td>'+esc(e.designation||'—')+'</td><td class="dc">'+esc(tr('department',e.department))+'<div class="sub">'+esc(e.company||'')+'</div></td><td>'+(e.visaStatus?pill(vsTone(e.visaStatus),tr('visaStatus',e.visaStatus)):'<span class="muted">—</span>')+'<div class="sub">'+esc(e.visaType?tr('visaType',e.visaType):'')+'</div></td><td>'+(n?'<span class="pill '+n.state+'">'+esc(L(n.d.l))+'</span><div class="sub">'+dLabel(n.n)+'</div>':'<span class="muted">—</span>')+'</td><td>'+pill(stTone(e.status),tr('status',e.status||'')+siteTxt(e))+'</td></tr>'}).join('')+'</tbody></table>';paintSel()}
 
 /* ---------- alerts ---------- */
 const WIN=[['alert',['منتهية أو قريبة الانتهاء','Expired or expiring soon']],['bad',['منتهية فقط','Expired only']],['d30',['تنتهي خلال 30 يوم','Expiring within 30 days']],['d60',['تنتهي خلال 60 يوم','Expiring within 60 days']],['d90',['تنتهي خلال 90 يوم','Expiring within 90 days']],['all',['كل المستندات المسجلة','All recorded documents']],['none',['مستندات بدون تاريخ','Documents with no date']]];
@@ -1522,9 +1534,9 @@ function repWorker(e){
    (e.notes?'<h2>'+_('ملاحظات','Notes')+'</h2><div style="white-space:pre-wrap">'+esc(e.notes)+'</div>':'')+
    '<h2>'+_('آخر التحديثات','Recent updates')+'</h2><table><tbody>'+log.map(x=>'<tr><td style="width:24mm">'+rd(x.d)+'</td><td>'+esc(x.t)+'</td></tr>').join('')+'</tbody></table>'+
    '<div class="sign"><div>'+_('إعداد: الموارد البشرية','Prepared by: HR')+'</div><div>'+_('توقيع العامل','Worker signature')+'</div><div>'+sigCell()+'</div></div>')}
-function filterDesc(){const f=S.f,p=[];
+function filterDesc(){if(S._repDesc)return S._repDesc;const f=S.f,p=[];if(f.os)return _('العمال المختارين','Selected workers');
   if(f.q)p.push(_('بحث: ','Search: ')+f.q);if(f.dept)p.push(_('القسم: ','Department: ')+(f.dept==='_none'?_('بدون قسم','None'):tr('department',f.dept)));if(f.comp)p.push(_('الشركة: ','Company: ')+(f.comp==='_none'?_('بدون شركة','None'):f.comp));if(f.wt)p.push(_('النوع: ','Type: ')+(f.wt==='Supplier'?_('سبلاير','Supplier'):_('عمال الشركة','Company workers')));
-  if(f.vs)p.push(_('التأشيرة: ','Visa: ')+(f.vs==='_proc'?_('قيد الإجراء','In process'):tr('visaStatus',f.vs)));if(f.st)p.push(_('الحالة: ','Status: ')+(f.st==='_active'?_('الحاليين','Current'):f.st==='_none'?_('غير محددة','Not set'):tr('status',f.st)));
+  if(f.vs)p.push(_('التأشيرة: ','Visa: ')+(f.vs==='_proc'?_('قيد الإجراء','In process'):f.vs==='_visit'?_('تأشيرة زيارة','Visit visa'):tr('visaStatus',f.vs)));if(f.st)p.push(_('الحالة: ','Status: ')+(f.st==='_active'?_('الحاليين','Current'):f.st==='_none'?_('غير محددة','Not set'):tr('status',f.st)));
   for(const k of Object.keys(EXTRA))if(f[k])p.push(EXTRA[k](f[k]));return p.length?p.join(' · '):_('كل العمال','All workers')}
 function repList(list){
   const act=list.filter(e=>!INACTIVE.has(e.status));const al=list.flatMap(alertsOf).sort((a,b)=>a.n-b.n);
@@ -2742,7 +2754,16 @@ const ACT={
   kdoc:t=>{S.df={type:'',win:'alert'};go('alerts')},
   miss:t=>go('workers',{miss:t.dataset.v}),
   fnew:()=>{S.f.nw=S.f.nw?'':'y';render()},
-  clearf:()=>{Object.assign(S.f,{q:'',dept:'',comp:'',wt:'',vs:'',st:'_active',loc:'',nat:'',miss:'',vt:'',nw:''});render()},
+  clearf:()=>{Object.assign(S.f,{q:'',dept:'',comp:'',wt:'',vs:'',st:'_active',loc:'',nat:'',miss:'',vt:'',nw:'',os:''});render()},
+  wsel:(t,ev)=>{const cb=t.querySelector('input');if(!cb)return;if(ev.target!==cb)cb.checked=!cb.checked;if(cb.checked)S.wsel.add(t.dataset.k);else S.wsel.delete(t.dataset.k);const tr_=t.closest('tr');if(tr_)tr_.classList.toggle('sel',cb.checked);paintSel()},
+  wselall:t=>{const ks=filteredWorkers().map(e=>e._k);if(t.checked)ks.forEach(k=>S.wsel.add(k));else ks.forEach(k=>S.wsel.delete(k));if(S.f.os&&!S.wsel.size)S.f.os='';render()},
+  wselonly:()=>{S.f.os=S.f.os?'':'1';render()},
+  wselclr:()=>{S.wsel.clear();S.f.os='';render()},
+  wselrep:async()=>{const list=selList();if(!list.length)return toast(_('مفيش عمال مختارين','No workers selected'));await preloadPhotos(list);S._repDesc=_('العمال المختارين','Selected workers')+' ('+list.length+')';let h;try{h=repList(list)}finally{S._repDesc=''}showReport(h,'Selected_Workers_'+TODAY+'.html',_('تقرير المختارين','Selected workers report')+' ('+list.length+')',true)},
+  wselxl:async()=>{const list=selList();if(!list.length)return toast(_('مفيش عمال مختارين','No workers selected'));if(!S.dl||!window.XLSX)return toast(_('التصدير غير متاح هنا','Export is not available here'));
+    const aoa=[XL.map(c=>c[0]),...list.map(e=>XL.map(([h,k,x])=>typeof x==='function'?x(e):x==='d'?xd(e[k]):x==='n'?(e[k]===''||e[k]==null?'':num(e[k])):(e[k]??'')))];
+    const wb=XLSX.utils.book_new();const ws=XLSX.utils.aoa_to_sheet(aoa,{dateNF:'dd/mm/yyyy'});ws['!cols']=XL.map(c=>({wch:c[1]==='name'?38:16}));XLSX.utils.book_append_sheet(wb,ws,'Selected Workers');
+    try{await S.dl.save({filename:'METAPLEX_Selected_'+TODAY+'.xlsx',data:new Blob([XLSX.write(wb,{type:'array',bookType:'xlsx'})])});toast(_('تم تجهيز الملف','File ready'))}catch(err){if(err&&err.code!=='declined')toast(_('تعذر التحميل: ','Download failed: ')+(err.message||err.code))}},
   kclose:()=>{try{window.close()}catch(e){}setTimeout(()=>{if(!document.hidden)toast('Press the Home button to close',4000)},500)}, kopen:()=>kOpen(), kexit:()=>kExit(), kkey:t=>kKey(t.dataset.v), kpick:t=>{K.k=t.dataset.k;K.list=null;renderKiosk($('#view'))}, kback:()=>{Object.assign(K,{k:null,list:null,done:null,pinMode:false,pin:'',err:'',code:''});renderKiosk($('#view'))}, kpunch:t=>kPunch(t.dataset.x),
   mclose:closeModal, mback:(t,ev)=>{if(ev.target===t)closeModal()},
   repone:t=>{const e=byKey(t.dataset.k);if(e)showReport(repWorker(e),'Worker_Report_'+safeName(e.empId||e.name)+'.html',_('تقرير العامل: ','Worker report: ')+e.name,false)},

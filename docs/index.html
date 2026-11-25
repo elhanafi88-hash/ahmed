@@ -2182,7 +2182,9 @@ async function viewFile(id,name,o){o=o||{};const meta=fileMeta(id)||{};name=name
   const close=()=>{$('#fv-root').innerHTML='';document.removeEventListener('keydown',esc1)};const esc1=ev=>{if(ev.key==='Escape')close()};document.addEventListener('keydown',esc1);$('#fv_x').onclick=close;
   let blob;try{const r=await fetch(fileUrl(id));if(!r.ok)throw new Error(r.status);blob=await r.blob();if(!blob.size)throw new Error('empty')}catch(err){$('#fv_b').innerHTML='<div class="fv-msg">'+_('مقدرتش أفتح الملف. جرب تاني أو ارفعه من جديد.','Could not open the file. Try again or re-upload it.')+'</div>';return}
   const ct=blob.type||meta.ct||'';const isPdf=/pdf/i.test(ct)||/\.pdf$/i.test(name);
-  $('#fv_dl').onclick=async()=>{if(!dl)return toast(_('التحميل مش متاح هنا','Download not available here'));let fn=name;if(!/\.[a-z0-9]{2,5}$/i.test(fn))fn+=isPdf?'.pdf':'.jpg';try{await dl.save({filename:fn,data:blob})}catch(err){if(err&&err.code!=='declined')toast(_('مقدرتش أحمل الملف','Download failed'))}};
+  $('#fv_dl').onclick=async()=>{let fn=name;if(!/\.[a-z0-9]{2,5}$/i.test(fn))fn+=isPdf?'.pdf':'.jpg';
+    if(S.dl){try{await S.dl.save({filename:fn,data:blob});return}catch(err){if(err&&err.code==='declined')return}}
+    try{const u=URL.createObjectURL(blob);const a=document.createElement('a');a.href=u;a.download=fn;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),10000)}catch(err){toast(_('مقدرتش أحمل الملف','Download failed'))}};
   const b=$('#fv_b');b.innerHTML='';fvPick(b,owner,!!o.pick);
   if(!isPdf){const u=URL.createObjectURL(blob);b.innerHTML='<div class="fv-pw"><img class="fv-img" src="'+u+'" draggable="false"></div>';$('#fv_pr').onclick=()=>printImgs([u]);return}
   try{const lib=await loadPdfJs();const pdf=await lib.getDocument({data:await blob.arrayBuffer()}).promise;const urls=[];

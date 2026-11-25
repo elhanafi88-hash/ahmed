@@ -873,13 +873,13 @@ function renderWorkers(v){const f=S.f;
    (any?'<button class="btn sm" data-act="clearf">'+_('مسح الفلاتر','Clear filters')+'</button>':'')+
   '</div>'+(chips?'<div class="toolbar">'+chips+'</div>':'')+'<div class="toolbar selbar" id="wselbar" hidden></div><section class="panel"><div class="tw" id="wtable"></div></section>';
   fillWorkers()}
-function fillWorkers(){const t=$('#wtable');if(!t)return;const f=S.f;const wGrp=e=>{const d=(e.designation||"").toLowerCase();return /fabricat|فبريك|فابريك/.test(d)?0:/weld|لحام/.test(d)?1:/helper|مساعد/.test(d)?2:3};const list=filteredWorkers().map((e,i)=>[e,i]).sort((x,y)=>wGrp(x[0])-wGrp(y[0])||x[1]-y[1]).map(x=>x[0]);
+function fillWorkers(){const t=$('#wtable');if(!t)return;const f=S.f;const wGrp=e=>wTrade(e.designation);const list=filteredWorkers().map((e,i)=>[e,i]).sort((x,y)=>wGrp(x[0])-wGrp(y[0])||x[1]-y[1]).map(x=>x[0]);
   $('#wcount').textContent=list.length+' '+_('من','of')+' '+S.emps.length;
   const th=(k,l)=>'<th data-sort="'+k+'">'+l+(f.sort===k?' <span class="ar">'+(f.dir>0?'▲':'▼')+'</span>':'')+'</th>';
   paintSel();
   if(!list.length){t.innerHTML='<div class="empty"><b>'+_('لا يوجد عمال بهذه الفلاتر','No workers match these filters')+'</b>'+_('غيّر البحث أو امسح الفلاتر.','Change the search or clear filters.')+'</div>';return}
   t.innerHTML='<table><thead><tr><th class="ck"><input type="checkbox" id="wselall" data-act="wselall" aria-label="'+_('اختيار الكل','Select all')+'"></th>'+th('sn','#')+th('name',_('العامل','Worker'))+th('designation',_('المهنة','Designation'))+th('department',_('القسم والشركة','Department & company'))+th('visaStatus',_('التأشيرة','Visa'))+th('near',_('أقرب انتهاء','Next expiry'))+th('status',_('الحالة','Status'))+'</tr></thead><tbody>'+
-  list.map((e,i)=>{const g=wGrp(e);const gh=(i===0||wGrp(list[i-1])!==g)?'<tr class="grp-h"><td colspan="8" style="background:#eef3fb;font-weight:700;padding:10px 14px">'+[_('الفبريكيتور','Fabricators'),_('اللحامين','Welders'),_('المساعدين','Helpers'),_('باقي المهن','Other trades')][g]+' ('+list.filter(x=>wGrp(x)===g).length+')</td></tr>':'';const n=nearest(e);const sl=S.wsel.has(e._k);return gh+'<tr class="row'+(sl?' sel':'')+'" data-act="open" data-k="'+e._k+'" tabindex="0"><td class="ck" data-act="wsel" data-k="'+e._k+'"><input type="checkbox"'+(sl?' checked':'')+' aria-label="'+_('اختيار','Select')+' '+esc(e.name)+'"></td><td class="id">'+(i+1)+'</td><td><div class="wnm">'+avatar(e)+'<div style="min-width:0"><div class="nm">'+esc(e.name)+newPill(e)+'</div>'+idHtml(e)+'</div></div></td><td>'+esc(e.designation||'—')+'</td><td class="dc">'+esc(tr('department',e.department))+'<div class="sub">'+esc(e.company||'')+'</div></td><td>'+(e.visaStatus?pill(vsTone(e.visaStatus),tr('visaStatus',e.visaStatus)):'<span class="muted">—</span>')+'<div class="sub">'+esc(e.visaType?tr('visaType',e.visaType):'')+'</div></td><td>'+(n?'<span class="pill '+n.state+'">'+esc(L(n.d.l))+'</span><div class="sub">'+dLabel(n.n)+'</div>':'<span class="muted">—</span>')+'</td><td>'+pill(stTone(e.status),tr('status',e.status||'')+siteTxt(e))+'</td></tr>'}).join('')+'</tbody></table>';paintSel()}
+  list.map((e,i)=>{const g=wGrp(e);const gh=(i===0||wGrp(list[i-1])!==g)?'<tr class="grp-h"><td colspan="8" style="background:#eef3fb;font-weight:700;padding:10px 14px">'+wTradeName(g)+' ('+list.filter(x=>wGrp(x)===g).length+')</td></tr>':'';const n=nearest(e);const sl=S.wsel.has(e._k);return gh+'<tr class="row'+(sl?' sel':'')+'" data-act="open" data-k="'+e._k+'" tabindex="0"><td class="ck" data-act="wsel" data-k="'+e._k+'"><input type="checkbox"'+(sl?' checked':'')+' aria-label="'+_('اختيار','Select')+' '+esc(e.name)+'"></td><td class="id">'+(i+1)+'</td><td><div class="wnm">'+avatar(e)+'<div style="min-width:0"><div class="nm">'+esc(e.name)+newPill(e)+'</div>'+idHtml(e)+'</div></div></td><td>'+esc(e.designation||'—')+'</td><td class="dc">'+esc(tr('department',e.department))+'<div class="sub">'+esc(e.company||'')+'</div></td><td>'+(e.visaStatus?pill(vsTone(e.visaStatus),tr('visaStatus',e.visaStatus)):'<span class="muted">—</span>')+'<div class="sub">'+esc(e.visaType?tr('visaType',e.visaType):'')+'</div></td><td>'+(n?'<span class="pill '+n.state+'">'+esc(L(n.d.l))+'</span><div class="sub">'+dLabel(n.n)+'</div>':'<span class="muted">—</span>')+'</td><td>'+pill(stTone(e.status),tr('status',e.status||'')+siteTxt(e))+'</td></tr>'}).join('')+'</tbody></table>';paintSel()}
 
 /* ---------- alerts ---------- */
 const WIN=[['alert',['منتهية أو قريبة الانتهاء','Expired or expiring soon']],['bad',['منتهية فقط','Expired only']],['d30',['تنتهي خلال 30 يوم','Expiring within 30 days']],['d60',['تنتهي خلال 60 يوم','Expiring within 60 days']],['d90',['تنتهي خلال 90 يوم','Expiring within 90 days']],['all',['كل المستندات المسجلة','All recorded documents']],['none',['مستندات بدون تاريخ','Documents with no date']]];
@@ -1515,10 +1515,22 @@ function rHead(title,sub,co){return '<div class="rh"><div class="rh-l"><img clas
 const SIGNER=()=>({n:S.lists.signName||'Ahmed Ali',t:S.lists.signTitle||'Factory Operations Coordinator'});
 function sigCell(){const g=SIGNER();return '<div class="sgn"><b class="en">'+esc(g.n)+'</b><span class="en">'+esc(g.t)+'</span></div>'}
 function rSign(){const g=SIGNER();return '<div class="rsign"><div class="rs-box"><span class="rs-l">'+_('اعتماد','Approved by')+'</span><b class="en">'+esc(g.n)+'</b><em class="en">'+esc(g.t)+'</em><i></i><small>'+_('التوقيع والتاريخ','Signature & date')+'</small></div></div>'}
-// تقسيم أي جدول عمال: الفبريكيتور ← اللحامين ← المساعدين ← باقي المهن
+// تقسيم العمال حسب المهنة بالترتيب ده (أي مهنة جديدة تتضاف هنا)
+const WTRADES=[
+ [/fabricat|فبريك|فابريك/i,'الفبريكيتور','Fabricators'],
+ [/weld|لحام/i,'اللحامين','Welders'],
+ [/helper|مساعد/i,'المساعدين','Helpers'],
+ [/paint|دهان/i,'الدهانين','Painters'],
+ [/fitter|فيتر|تركيب/i,'الفيترز','Fitters'],
+ [/operator|مشغل|cnc/i,'المشغلين','Operators'],
+ [/driver|سائق|سواق/i,'السواقين','Drivers'],
+ [/foreman|فورمان|مشرف/i,'الفورمان','Foremen'],
+ [/engineer|مهندس|coordinator|منسق/i,'المهندسين والإداريين','Engineers & admin']];
+function wTrade(d){d=String(d||'');for(let i=0;i<WTRADES.length;i++)if(WTRADES[i][0].test(d))return i;return WTRADES.length}
+function wTradeName(i){const t=WTRADES[i];return t?_(t[1],t[2]):_('باقي المهن','Other trades')}
 function grpWorkers(html){try{
  const nm={};for(const e of (S.emps||[])){if(e.name)nm[String(e.name).trim().toUpperCase()]=e.designation||''}
- const cat=d=>{d=String(d||'').toLowerCase();return /fabricat|فبريك|فابريك/.test(d)?0:/weld|لحام/.test(d)?1:/helper|مساعد/.test(d)?2:3};
+ const cat=wTrade,OT=WTRADES.length+1;
  const T=document.createElement('template');T.innerHTML=html;let ch=false;
  T.content.querySelectorAll('table').forEach(t=>{
   const hr=t.tHead&&t.tHead.rows[t.tHead.rows.length-1];const tb=t.tBodies[0];if(!hr||!tb)return;
@@ -1530,16 +1542,15 @@ function grpWorkers(html){try{
   const info=rows.map((r,i)=>{let d=null;
    if(dc>=0&&r.cells.length===hr.cells.length)d=r.cells[dc].textContent.trim();
    else{for(const c of r.cells){const k=[c.querySelector('.nm,b'),c].map(x=>x&&x.textContent.trim().toUpperCase());for(const x of k){if(x&&nm[x]!==undefined){d=nm[x];break}}if(d!==null)break}}
-   return {r,i,g:d===null?4:cat(d)}});
-  if(info.filter(x=>x.g<4).length<2)return;
+   return {r,i,g:d===null?OT:cat(d)}});
+  if(info.filter(x=>x.g<OT).length<2)return;
   const ni=[...hr.cells].findIndex(c=>/^(#|م|ت|No\.?|S\.?N)$/i.test(c.textContent.trim().replace(/[▲▼]/g,'').trim()));
   info.sort((a,b)=>a.g-b.g||a.i-b.i);
-  const names=[_('الفبريكيتور','Fabricators'),_('اللحامين','Welders'),_('المساعدين','Helpers'),_('باقي المهن','Other trades')];
   let last=-1,n=0;tb.innerHTML='';
   for(const x of info){
-   if(x.g<4&&x.g!==last){const h=document.createElement('tr');h.className='grp-h';h.innerHTML='<td colspan="'+cols+'" style="background:#eef3fb;font-weight:700;padding:6px 10px;text-align:start">'+names[x.g]+' ('+info.filter(y=>y.g===x.g).length+')</td>';tb.appendChild(h)}
+   if(x.g<OT&&x.g!==last){const h=document.createElement('tr');h.className='grp-h';h.innerHTML='<td colspan="'+cols+'" style="background:#eef3fb;font-weight:700;padding:6px 10px;text-align:start">'+wTradeName(x.g)+' ('+info.filter(y=>y.g===x.g).length+')</td>';tb.appendChild(h)}
    last=x.g;
-   if(x.g<4&&ni>=0&&x.r.cells[ni]&&/^\d+$/.test(x.r.cells[ni].textContent.trim()))x.r.cells[ni].textContent=++n;
+   if(x.g<OT&&ni>=0&&x.r.cells[ni]&&/^\d+$/.test(x.r.cells[ni].textContent.trim()))x.r.cells[ni].textContent=++n;
    tb.appendChild(x.r)}
   ch=true});
  return ch?T.innerHTML:html}catch(err){console.warn('grpWorkers',err);return html}}
